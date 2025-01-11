@@ -124,10 +124,11 @@ def fetch_locations_from_db():
         for row in cursor.fetchall()
     ]
 
-    cursor.execute("SELECT * FROM all_R4_traffic_signals WHERE Miovision = 0 OR Miovision IS NULL")
+    cursor.execute("SELECT * FROM addToMap")
 
     other_locations = [
-        {"id": row[1], "latitude": row[2], "longitude": row[3], "main_route": row[4], "int_route": row[5]}
+        {"id": row[0], "name": row[1], "latitude": row[2], "longitude": row[3], "main_route": row[4],
+         "intersect_route": row[5]}
         for row in cursor.fetchall()
     ]
     conn.close()
@@ -290,7 +291,7 @@ def fetch_controller_actions(day_plan, conn, customId):
     return df
 
 
-def create_folium_map(mio_locations, output_file="map.html"):
+def create_folium_map(mio_locations, other_locations, output_file="map.html"):
     """
     Create an interactive map using Folium.
     """
@@ -318,6 +319,22 @@ def create_folium_map(mio_locations, output_file="map.html"):
             popup=popup_html,
             tooltip=location["name"],
             #icon=folium.Icon(color="blue", icon="info-sign")
+        ).add_to(m)
+
+    # Add red markers for Non-Miovision locations
+    for loc in other_locations:
+        split_url_nonMio = f"http://10.4.10.179:5000/split_monitor/{loc['name']}/{loc['name']}"
+        popup_html_nonMio = (
+            f"<b>{loc['name']}</b><br>Main Route: {loc['main_route']}<br>Intersect Route: {loc['intersect_route']}"
+            f"<br><a href='{split_url_nonMio}' target='_blank'>View Split Monitor</a>"
+        )
+        # popup_html = f"<b>{loc['id']}</b><br>Main Route: {loc['main_route']}<br>Intersect Route: {loc['int_route']}"
+        folium.Marker(
+            [loc["latitude"], loc["longitude"]],
+            popup=popup_html_nonMio,
+            tooltip=f"No Miovision",
+            # icon=folium.Icon(color="red", icon="info-sign", icon_size=(5, 5))
+            icon=folium.Icon(color="red")
         ).add_to(m)
 
         # Add custom HTML content (e.g., a header above the map)
@@ -757,7 +774,7 @@ def getControllerData():
 if __name__ == "__main__":
     if not os.path.exists("map.html"):
         mio_locations, other_locations = fetch_locations_from_db()
-        create_folium_map(mio_locations)
+        create_folium_map(mio_locations, other_locations)
     #locations, other_locations = fetch_locations_from_db()
     #print(locations, other_locations)
     app.run(debug=True)
