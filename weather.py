@@ -1,10 +1,7 @@
 # Import Meteostat library and dependencies
-from datetime import datetime
 import matplotlib.pyplot as plt
-from meteostat import Point, Daily
-from meteostat import Stations
+from meteostat import Point, Daily, Stations, Hourly
 from datetime import datetime
-from meteostat import Hourly
 
 
 def getTemperature():
@@ -34,7 +31,6 @@ def getStations():
     print(station)
 
 
-# TODO - incorporate into anomaly detection
 def getHourly(lat, long, start_date, end_date):
     # Set time period
     start = datetime(2024, 12, 22)

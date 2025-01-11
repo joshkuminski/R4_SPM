@@ -21,17 +21,6 @@ def connect_to_db(server, database):
 
 
 def fetch_hires_data(api_key, intersection_id, date):
-    """
-    Fetches the Turning Movement Count (TMC) data for a specific intersection and date.
-
-    Args:
-        api_key (str): Miovision API key.
-        intersection_id (str): Intersection ID.
-        date (str): Date in YYYY-MM-DD format.
-
-    Returns:
-        list: TMC data as a list of dictionaries or None if an error occurs.
-    """
     base_url = f"https://api.miovision.com/intersections/{intersection_id}/hiresdata"
     headers = {
         "Authorization": f"{api_key}",
@@ -52,13 +41,6 @@ def fetch_hires_data(api_key, intersection_id, date):
 
 
 def create_intersection_table(conn, intersection_id):
-    """
-    Creates a new table for the intersection if it does not exist.
-
-    Args:
-        conn (pyodbc.Connection): SQL Server database connection.
-        intersection_id (str): Intersection ID.
-    """
     cursor = conn.cursor()
     table_name = f"hires_{intersection_id.replace('-', '_')}"  # Sanitize table name
     cursor.execute(f"""

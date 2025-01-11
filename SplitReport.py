@@ -24,7 +24,6 @@ def import_csv(file):
                "SP4_split",  "SP5_split", "SP6_split", "SP7_split", "SP8_split"]
     df.columns = columns
 
-    #print(df)
 
     # Convert the 'Timestamp' column from the CSV's format to the SQL format
     df['Timestamp'] = pd.to_datetime(df['Timestamp'], format='%m/%d/%Y %H:%M:%S')
@@ -65,10 +64,6 @@ def import_csv(file):
  
     # Drop duplicate timestamps (keeping the first occurrence)
     df = df.drop_duplicates(subset=['Timestamp'], keep='first')
-
-    # Save the updated DataFrame back to a CSV
-    #output_path = "filtered_file.csv"
-    #df.to_csv(output_path, index=False)
 
     return df
 
@@ -157,7 +152,7 @@ if __name__ == "__main__":
     intersection_id = "Split_Table_04_43_394"
 
     '''
-    # Create New Table
+    # Create New Table if it dosent already exist
     conn = connect_to_db(server, database)
 
     create_table(conn)
@@ -165,6 +160,5 @@ if __name__ == "__main__":
     file_path = "./SplitReports/SplitReport_3394_12_23_2024.csv"
     df = import_csv(file_path)
 
-    #print(df)
     load_to_db(df, server, database, intersection_id)
 
