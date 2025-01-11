@@ -1,0 +1,2710 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <link rel="stylesheet" href="./static/folium_css.css"/>
+    
+        <script>
+            L_NO_TOUCH = false;
+            L_DISABLE_3D = false;
+        </script>
+    
+    <style>html, body {width: 100%;height: 100%;margin: 0;padding: 0;}</style>
+    <style>#map {position:absolute;top:0;bottom:0;right:0;left:0;}</style>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_08cb13264141aef8344a1447edc032fa {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+        
+</head>
+<body>
+    
+    
+        <div id="time-range">
+                <label for="range">Select Time Range:</label>
+                <select id="range" onchange="setTimeRange(this.value)">
+                    <option value="last_week" selected>Last Week</option>
+                    <option value="last_month" selected>Last Month</option>
+                    <option value="last_3_months">Last 3 Months</option>
+                    <option value="last_6_months">Last 6 Months</option>
+                    <option value="last_year">Last Year</option>
+                    <option value="custom">Custom</option>
+                </select>
+            </div>
+
+            <!-- Custom Date Range Inputs (Hidden by Default) -->
+            <div id="custom-range-container" style="display: none; margin-top: 10px;">
+                <label for="start-date">Start Date:</label>
+                <input type="text" id="start-date" class="flatpickr">
+                
+                <label for="end-date">End Date:</label>
+                <input type="text" id="end-date" class="flatpickr">
+                
+                <button id="apply-date-range">Apply</button>
+            </div>
+       
+    <script src="./static/folium_js.js"></script>
+    
+            <div class="folium-map" id="map_08cb13264141aef8344a1447edc032fa" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_08cb13264141aef8344a1447edc032fa = L.map(
+                "map_08cb13264141aef8344a1447edc032fa",
+                {
+                    center: [43.18875097, -77.68468577],
+                    crs: L.CRS.EPSG3857,
+                    zoom: 12,
+                    zoomControl: true,
+                    preferCanvas: false,
+                }
+            );
+
+            
+
+        
+    
+            var tile_layer_28fc43505b3311b6c3c4c5a61b6d2fac = L.tileLayer(
+                "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {"attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors", "detectRetina": false, "maxNativeZoom": 19, "maxZoom": 19, "minZoom": 0, "noWrap": false, "opacity": 1, "subdomains": "abc", "tms": false}
+            );
+        
+    
+            tile_layer_28fc43505b3311b6c3c4c5a61b6d2fac.addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+            var marker_c002bc4e6f2b6d0fbdb8b60bdcc2f6ad = L.marker(
+                [43.18875097, -77.68468577],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_2118537ec1b5498e889642514b6c87d9 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_cacbc6d6beb9121a6e335cc421efe921 = $(`<div id="html_cacbc6d6beb9121a6e335cc421efe921" style="width: 100.0%; height: 100.0%;"><b>04-43-433 - I390 SB On/Off Ramp @ Bellwood Dr</b><br>ID: 0482a108-8feb-4f60-af48-1c04be290179<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-433 - I390 SB On/Off Ramp @ Bellwood Dr/0482a108-8feb-4f60-af48-1c04be290179'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-433 - I390 SB On/Off Ramp @ Bellwood Dr/04-43-433' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_2118537ec1b5498e889642514b6c87d9.setContent(html_cacbc6d6beb9121a6e335cc421efe921);
+            
+        
+
+        marker_c002bc4e6f2b6d0fbdb8b60bdcc2f6ad.bindPopup(popup_2118537ec1b5498e889642514b6c87d9)
+        ;
+
+        
+    
+    
+            marker_c002bc4e6f2b6d0fbdb8b60bdcc2f6ad.bindTooltip(
+                `<div>
+                     04-43-433 - I390 SB On/Off Ramp @ Bellwood Dr
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_03ca8f7c5948b40d5e7e3b34e3ad2285 = L.marker(
+                [43.10771043, -77.7449923],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_9095cbe1d4b4bf18379d79b6dfaeafea = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_2fcd75383c785b1f6ad7c189f3ef8e34 = $(`<div id="html_2fcd75383c785b1f6ad7c189f3ef8e34" style="width: 100.0%; height: 100.0%;"><b>04-43-227 - NY33A Chili Ave @ NY386 & Paul Rd</b><br>ID: 06ce283b-07c1-4782-81c2-4698a6f28483<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-227 - NY33A Chili Ave @ NY386 & Paul Rd/06ce283b-07c1-4782-81c2-4698a6f28483'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-227 - NY33A Chili Ave @ NY386 & Paul Rd/04-43-227' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_9095cbe1d4b4bf18379d79b6dfaeafea.setContent(html_2fcd75383c785b1f6ad7c189f3ef8e34);
+            
+        
+
+        marker_03ca8f7c5948b40d5e7e3b34e3ad2285.bindPopup(popup_9095cbe1d4b4bf18379d79b6dfaeafea)
+        ;
+
+        
+    
+    
+            marker_03ca8f7c5948b40d5e7e3b34e3ad2285.bindTooltip(
+                `<div>
+                     04-43-227 - NY33A Chili Ave @ NY386 & Paul Rd
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_ced11fcb3ba8330d0d5d39c1e577e3ea = L.marker(
+                [43.12154568, -77.64932792],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_9ffa51ad7884a8b0ca8df94d8eda90d7 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_a9db12825d563a42aedea2371694f97f = $(`<div id="html_a9db12825d563a42aedea2371694f97f" style="width: 100.0%; height: 100.0%;"><b>04-43-138 NY383 Scottsville Rd. @ I390 SB Ramp</b><br>ID: 06dc6517-f0b5-4288-b6a4-2ce356bd99c8<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-138 NY383 Scottsville Rd. @ I390 SB Ramp/06dc6517-f0b5-4288-b6a4-2ce356bd99c8'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-138 NY383 Scottsville Rd. @ I390 SB Ramp/04-43-138' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_9ffa51ad7884a8b0ca8df94d8eda90d7.setContent(html_a9db12825d563a42aedea2371694f97f);
+            
+        
+
+        marker_ced11fcb3ba8330d0d5d39c1e577e3ea.bindPopup(popup_9ffa51ad7884a8b0ca8df94d8eda90d7)
+        ;
+
+        
+    
+    
+            marker_ced11fcb3ba8330d0d5d39c1e577e3ea.bindTooltip(
+                `<div>
+                     04-43-138 NY383 Scottsville Rd. @ I390 SB Ramp
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_1986923733fdfef14cbfa1e4c70a26f7 = L.marker(
+                [43.09081763, -77.51526365],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_f67dc4ad98f7c78a5f0f73f54d815207 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_0441d826f6c1b9c45461a5c06c3124ce = $(`<div id="html_0441d826f6c1b9c45461a5c06c3124ce" style="width: 100.0%; height: 100.0%;"><b>04-43-006 - NY31 Monroe Ave & State St @ NY96 Main St</b><br>ID: 0ba2ac50-6d5d-4752-bb3c-23db2f2bd938<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-006 - NY31 Monroe Ave & State St @ NY96 Main St/0ba2ac50-6d5d-4752-bb3c-23db2f2bd938'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-006 - NY31 Monroe Ave & State St @ NY96 Main St/04-43-6' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_f67dc4ad98f7c78a5f0f73f54d815207.setContent(html_0441d826f6c1b9c45461a5c06c3124ce);
+            
+        
+
+        marker_1986923733fdfef14cbfa1e4c70a26f7.bindPopup(popup_f67dc4ad98f7c78a5f0f73f54d815207)
+        ;
+
+        
+    
+    
+            marker_1986923733fdfef14cbfa1e4c70a26f7.bindTooltip(
+                `<div>
+                     04-43-006 - NY31 Monroe Ave & State St @ NY96 Main St
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_0a8e207a3d4d8629ca545138be9e9030 = L.marker(
+                [43.13007941, -77.47587297],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_02a0ddefedc489a5f7a5d0485fa5a847 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_349d95beb887dd47cbad8e8f30f79e5d = $(`<div id="html_349d95beb887dd47cbad8e8f30f79e5d" style="width: 100.0%; height: 100.0%;"><b>04-43-028 - NY441 Penfield Rd @ Five Mile Line Rd (CR18)</b><br>ID: 0cf15581-df22-421d-98b9-b70d897c3ca3<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-028 - NY441 Penfield Rd @ Five Mile Line Rd (CR18)/0cf15581-df22-421d-98b9-b70d897c3ca3'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-028 - NY441 Penfield Rd @ Five Mile Line Rd (CR18)/04-43-28' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_02a0ddefedc489a5f7a5d0485fa5a847.setContent(html_349d95beb887dd47cbad8e8f30f79e5d);
+            
+        
+
+        marker_0a8e207a3d4d8629ca545138be9e9030.bindPopup(popup_02a0ddefedc489a5f7a5d0485fa5a847)
+        ;
+
+        
+    
+    
+            marker_0a8e207a3d4d8629ca545138be9e9030.bindTooltip(
+                `<div>
+                     04-43-028 - NY441 Penfield Rd @ Five Mile Line Rd (CR18)
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_e0f702d28a738ca27f992e4cf047a343 = L.marker(
+                [42.96004431, -78.40582409],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_61b465af197b7691e04b403950c58eb8 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_d946b21df19028192be966778f6d97e2 = $(`<div id="html_d946b21df19028192be966778f6d97e2" style="width: 100.0%; height: 100.0%;"><b>04-41-02 - NY-33 Main St @ NY-77 Alleghany Rd</b><br>ID: 0d3d8c1c-115d-48fd-8533-456d1441f099<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-41-02 - NY-33 Main St @ NY-77 Alleghany Rd/0d3d8c1c-115d-48fd-8533-456d1441f099'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-41-02 - NY-33 Main St @ NY-77 Alleghany Rd/04-41-2' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_61b465af197b7691e04b403950c58eb8.setContent(html_d946b21df19028192be966778f6d97e2);
+            
+        
+
+        marker_e0f702d28a738ca27f992e4cf047a343.bindPopup(popup_61b465af197b7691e04b403950c58eb8)
+        ;
+
+        
+    
+    
+            marker_e0f702d28a738ca27f992e4cf047a343.bindTooltip(
+                `<div>
+                     04-41-02 - NY-33 Main St @ NY-77 Alleghany Rd
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_083e4a10dc4d8f2814a96ca503e55023 = L.marker(
+                [43.06853131, -77.43215332],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_7dc0aba6d27007126438e60ff350e276 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_7fc1172f701a42e7443191be60269972 = $(`<div id="html_7fc1172f701a42e7443191be60269972" style="width: 100.0%; height: 100.0%;"><b>04-43-277 - NY31 Palmyra Rd @ Turk Hill Rd</b><br>ID: 12e69214-fc9a-487f-a474-eae501e6547d<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-277 - NY31 Palmyra Rd @ Turk Hill Rd/12e69214-fc9a-487f-a474-eae501e6547d'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-277 - NY31 Palmyra Rd @ Turk Hill Rd/04-43-277' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_7dc0aba6d27007126438e60ff350e276.setContent(html_7fc1172f701a42e7443191be60269972);
+            
+        
+
+        marker_083e4a10dc4d8f2814a96ca503e55023.bindPopup(popup_7dc0aba6d27007126438e60ff350e276)
+        ;
+
+        
+    
+    
+            marker_083e4a10dc4d8f2814a96ca503e55023.bindTooltip(
+                `<div>
+                     04-43-277 - NY31 Palmyra Rd @ Turk Hill Rd
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_68d7a706700c1e316bdc7d6f29a5ae72 = L.marker(
+                [43.031914, -77.44158],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_10ed2c50912de60cd34ca46fced7bd77 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_b7cced1ba1be7deebe054183c0cc9495 = $(`<div id="html_b7cced1ba1be7deebe054183c0cc9495" style="width: 100.0%; height: 100.0%;"><b>NY96 @ Turk Hill Road & Eastview Mall</b><br>ID: 13e8e644-bfa2-4e73-a56b-6102806eab71<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/NY96 @ Turk Hill Road & Eastview Mall/13e8e644-bfa2-4e73-a56b-6102806eab71'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/NY96 @ Turk Hill Road & Eastview Mall/04-44-27' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_10ed2c50912de60cd34ca46fced7bd77.setContent(html_b7cced1ba1be7deebe054183c0cc9495);
+            
+        
+
+        marker_68d7a706700c1e316bdc7d6f29a5ae72.bindPopup(popup_10ed2c50912de60cd34ca46fced7bd77)
+        ;
+
+        
+    
+    
+            marker_68d7a706700c1e316bdc7d6f29a5ae72.bindTooltip(
+                `<div>
+                     NY96 @ Turk Hill Road & Eastview Mall
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_d6b38a2b8ed43fd9db8901ff146260f6 = L.marker(
+                [42.88034747, -77.2760497],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_f431a9031a8af6ace561996772f703dd = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_5c32c224cfde6f69730b139353653632 = $(`<div id="html_5c32c224cfde6f69730b139353653632" style="width: 100.0%; height: 100.0%;"><b>04-44-1A Rte. 332 @ Parrish St.</b><br>ID: 14510ee0-f540-433d-954a-47a6081111f0<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-44-1A Rte. 332 @ Parrish St./14510ee0-f540-433d-954a-47a6081111f0'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-44-1A Rte. 332 @ Parrish St./04-44-1A' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_f431a9031a8af6ace561996772f703dd.setContent(html_5c32c224cfde6f69730b139353653632);
+            
+        
+
+        marker_d6b38a2b8ed43fd9db8901ff146260f6.bindPopup(popup_f431a9031a8af6ace561996772f703dd)
+        ;
+
+        
+    
+    
+            marker_d6b38a2b8ed43fd9db8901ff146260f6.bindTooltip(
+                `<div>
+                     04-44-1A Rte. 332 @ Parrish St.
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_4f4adfdb27d52152aaebe74e0a901e26 = L.marker(
+                [43.07029963, -77.44762704],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_d7c119b8c3fe4e04a7106bf2e6ead66f = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_ba87d9d81907badac28abf724acc7a28 = $(`<div id="html_ba87d9d81907badac28abf724acc7a28" style="width: 100.0%; height: 100.0%;"><b>04-43-276 NY31 @ Blackwatch Trail & Valley Creek Dr</b><br>ID: 1ac571fe-23ba-463d-8c85-e63b8a71b2a0<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-276 NY31 @ Blackwatch Trail & Valley Creek Dr/1ac571fe-23ba-463d-8c85-e63b8a71b2a0'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-276 NY31 @ Blackwatch Trail & Valley Creek Dr/04-43-276' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_d7c119b8c3fe4e04a7106bf2e6ead66f.setContent(html_ba87d9d81907badac28abf724acc7a28);
+            
+        
+
+        marker_4f4adfdb27d52152aaebe74e0a901e26.bindPopup(popup_d7c119b8c3fe4e04a7106bf2e6ead66f)
+        ;
+
+        
+    
+    
+            marker_4f4adfdb27d52152aaebe74e0a901e26.bindTooltip(
+                `<div>
+                     04-43-276 NY31 @ Blackwatch Trail & Valley Creek Dr
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_2f682d7c0b8cc2475fd50718478dfbce = L.marker(
+                [43.21979452, -77.8921432],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_c62b1f3da567080b3562ff5bddaad3c1 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_4282db447bca4661bd94ee2de2c7f2a7 = $(`<div id="html_4282db447bca4661bd94ee2de2c7f2a7" style="width: 100.0%; height: 100.0%;"><b>04-43-478 - NY260 Sweden Walker Rd @ East Ave</b><br>ID: 1e782364-6cea-471c-bea3-293896ea07fd<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-478 - NY260 Sweden Walker Rd @ East Ave/1e782364-6cea-471c-bea3-293896ea07fd'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-478 - NY260 Sweden Walker Rd @ East Ave/04-43-478' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_c62b1f3da567080b3562ff5bddaad3c1.setContent(html_4282db447bca4661bd94ee2de2c7f2a7);
+            
+        
+
+        marker_2f682d7c0b8cc2475fd50718478dfbce.bindPopup(popup_c62b1f3da567080b3562ff5bddaad3c1)
+        ;
+
+        
+    
+    
+            marker_2f682d7c0b8cc2475fd50718478dfbce.bindTooltip(
+                `<div>
+                     04-43-478 - NY260 Sweden Walker Rd @ East Ave
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_07112c41a5cf29186a347bcf31ef3506 = L.marker(
+                [43.00917707, -77.44422916],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_581714c3cb49b6a8c4dc001148c65625 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_f181cc4f464d897b8853a864d0965835 = $(`<div id="html_f181cc4f464d897b8853a864d0965835" style="width: 100.0%; height: 100.0%;"><b>04-44-29 NY96 @ Fishers and Rowley</b><br>ID: 232052b6-cac3-4304-a7a5-9e4d51998079<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-44-29 NY96 @ Fishers and Rowley/232052b6-cac3-4304-a7a5-9e4d51998079'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-44-29 NY96 @ Fishers and Rowley/04-44-29' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_581714c3cb49b6a8c4dc001148c65625.setContent(html_f181cc4f464d897b8853a864d0965835);
+            
+        
+
+        marker_07112c41a5cf29186a347bcf31ef3506.bindPopup(popup_581714c3cb49b6a8c4dc001148c65625)
+        ;
+
+        
+    
+    
+            marker_07112c41a5cf29186a347bcf31ef3506.bindTooltip(
+                `<div>
+                     04-44-29 NY96 @ Fishers and Rowley
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_97b2b2202966a4b523683a6feb60a690 = L.marker(
+                [43.22535693, -77.89013242],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_085c492138ea4d01132aa1affe989c10 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_add133ae537e253915cf6108ef6c0b3d = $(`<div id="html_add133ae537e253915cf6108ef6c0b3d" style="width: 100.0%; height: 100.0%;"><b>04-43-250 - NY104 @ NY260</b><br>ID: 24ed7400-5b78-458a-9590-bcd8dd85d40a<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-250 - NY104 @ NY260/24ed7400-5b78-458a-9590-bcd8dd85d40a'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-250 - NY104 @ NY260/04-43-250' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_085c492138ea4d01132aa1affe989c10.setContent(html_add133ae537e253915cf6108ef6c0b3d);
+            
+        
+
+        marker_97b2b2202966a4b523683a6feb60a690.bindPopup(popup_085c492138ea4d01132aa1affe989c10)
+        ;
+
+        
+    
+    
+            marker_97b2b2202966a4b523683a6feb60a690.bindTooltip(
+                `<div>
+                     04-43-250 - NY104 @ NY260
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_f0207f337221b8f67f6fbc94df5bb083 = L.marker(
+                [43.10006017, -77.51398394],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_3a61ccfe6dfd9dd4f2e0abcbdb579565 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_536d166a61fc742d7f44446616a7d391 = $(`<div id="html_536d166a61fc742d7f44446616a7d391" style="width: 100.0%; height: 100.0%;"><b>04-43-208 - NY96 East Ave @ New England Dr & South Campus Dr</b><br>ID: 252c0312-6f4b-4928-be2f-5253da8096d8<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-208 - NY96 East Ave @ New England Dr & South Campus Dr/252c0312-6f4b-4928-be2f-5253da8096d8'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-208 - NY96 East Ave @ New England Dr & South Campus Dr/04-43-208' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_3a61ccfe6dfd9dd4f2e0abcbdb579565.setContent(html_536d166a61fc742d7f44446616a7d391);
+            
+        
+
+        marker_f0207f337221b8f67f6fbc94df5bb083.bindPopup(popup_3a61ccfe6dfd9dd4f2e0abcbdb579565)
+        ;
+
+        
+    
+    
+            marker_f0207f337221b8f67f6fbc94df5bb083.bindTooltip(
+                `<div>
+                     04-43-208 - NY96 East Ave @ New England Dr & South Campus Dr
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_1709823bdcb25672a37fcf31535608e7 = L.marker(
+                [43.08728519, -77.60550911],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_420d40b0148756353d0d7003e92a9ee7 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_25309aa17ba9330c1274f6b993e3e67a = $(`<div id="html_25309aa17ba9330c1274f6b993e3e67a" style="width: 100.0%; height: 100.0%;"><b>04-43-326 NY-252 @ I390SB</b><br>ID: 2aaee426-2ac9-4765-a3be-d0442fb918dc<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-326 NY-252 @ I390SB/2aaee426-2ac9-4765-a3be-d0442fb918dc'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-326 NY-252 @ I390SB/04-43-326' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_420d40b0148756353d0d7003e92a9ee7.setContent(html_25309aa17ba9330c1274f6b993e3e67a);
+            
+        
+
+        marker_1709823bdcb25672a37fcf31535608e7.bindPopup(popup_420d40b0148756353d0d7003e92a9ee7)
+        ;
+
+        
+    
+    
+            marker_1709823bdcb25672a37fcf31535608e7.bindTooltip(
+                `<div>
+                     04-43-326 NY-252 @ I390SB
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_37307f59680daef47f525db3fe2531ff = L.marker(
+                [43.10591006, -77.74866728],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_45f9311c2fc0b35a6b0a797cdd87f826 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_da92f39abd9ddeb961f867e01488824d = $(`<div id="html_da92f39abd9ddeb961f867e01488824d" style="width: 100.0%; height: 100.0%;"><b>04-43-226 - NY33A Chili Ave @ Paul Rd (CR168)</b><br>ID: 2c21ac67-6ec1-4b20-95c9-1188a8e06cc4<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-226 - NY33A Chili Ave @ Paul Rd (CR168)/2c21ac67-6ec1-4b20-95c9-1188a8e06cc4'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-226 - NY33A Chili Ave @ Paul Rd (CR168)/04-43-226' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_45f9311c2fc0b35a6b0a797cdd87f826.setContent(html_da92f39abd9ddeb961f867e01488824d);
+            
+        
+
+        marker_37307f59680daef47f525db3fe2531ff.bindPopup(popup_45f9311c2fc0b35a6b0a797cdd87f826)
+        ;
+
+        
+    
+    
+            marker_37307f59680daef47f525db3fe2531ff.bindTooltip(
+                `<div>
+                     04-43-226 - NY33A Chili Ave @ Paul Rd (CR168)
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_d5c1d864e3a3ee6d9f6874f828dcb5c8 = L.marker(
+                [43.21419292, -77.51556248],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_b0a0c93e91e739e83a5226828260b149 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_5ee0024a9ff70357383e9b90acb88d44 = $(`<div id="html_5ee0024a9ff70357383e9b90acb88d44" style="width: 100.0%; height: 100.0%;"><b>04-43-200 NY104 WB ramps @ Bay Rd</b><br>ID: 2ff133f1-632d-4a17-82d6-f87af9e77748<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-200 NY104 WB ramps @ Bay Rd/2ff133f1-632d-4a17-82d6-f87af9e77748'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-200 NY104 WB ramps @ Bay Rd/04-43-200' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_b0a0c93e91e739e83a5226828260b149.setContent(html_5ee0024a9ff70357383e9b90acb88d44);
+            
+        
+
+        marker_d5c1d864e3a3ee6d9f6874f828dcb5c8.bindPopup(popup_b0a0c93e91e739e83a5226828260b149)
+        ;
+
+        
+    
+    
+            marker_d5c1d864e3a3ee6d9f6874f828dcb5c8.bindTooltip(
+                `<div>
+                     04-43-200 NY104 WB ramps @ Bay Rd
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_56db2b74b0baaa273def703d1faba0e0 = L.marker(
+                [43.16488998, -77.69118041],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_83675953da4c687a1e42982b596d8698 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_f50c1e005e9864a831db05fe78413511 = $(`<div id="html_f50c1e005e9864a831db05fe78413511" style="width: 100.0%; height: 100.0%;"><b>04-43-093 - NY31 @ Howard Road</b><br>ID: 3047f46a-8ead-4db1-82f4-8c3ea705e8e9<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-093 - NY31 @ Howard Road/3047f46a-8ead-4db1-82f4-8c3ea705e8e9'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-093 - NY31 @ Howard Road/04-43-93' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_83675953da4c687a1e42982b596d8698.setContent(html_f50c1e005e9864a831db05fe78413511);
+            
+        
+
+        marker_56db2b74b0baaa273def703d1faba0e0.bindPopup(popup_83675953da4c687a1e42982b596d8698)
+        ;
+
+        
+    
+    
+            marker_56db2b74b0baaa273def703d1faba0e0.bindTooltip(
+                `<div>
+                     04-43-093 - NY31 @ Howard Road
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_3f085433032dd0e1cfdffef1c3f515d6 = L.marker(
+                [42.5596781, -77.6946654],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_45f1b43f94333e9c4d294a8ac0470d8c = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_36150b328cefd2ae2c10c27df5222fd8 = $(`<div id="html_36150b328cefd2ae2c10c27df5222fd8" style="width: 100.0%; height: 100.0%;"><b>04-42-03 - NY63 Main St @ NY36 Clara Barton St</b><br>ID: 330665e4-9876-4564-ade7-3f2a3efdb451<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-42-03 - NY63 Main St @ NY36 Clara Barton St/330665e4-9876-4564-ade7-3f2a3efdb451'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-42-03 - NY63 Main St @ NY36 Clara Barton St/04-42-3' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_45f1b43f94333e9c4d294a8ac0470d8c.setContent(html_36150b328cefd2ae2c10c27df5222fd8);
+            
+        
+
+        marker_3f085433032dd0e1cfdffef1c3f515d6.bindPopup(popup_45f1b43f94333e9c4d294a8ac0470d8c)
+        ;
+
+        
+    
+    
+            marker_3f085433032dd0e1cfdffef1c3f515d6.bindTooltip(
+                `<div>
+                     04-42-03 - NY63 Main St @ NY36 Clara Barton St
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_7191323e8e8811cbf7b5b649783331d1 = L.marker(
+                [43.19800413, -77.89948267],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_bfe38f05480efd975f0bae9e825eef9b = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_c7fb7d679470418585ad805202f87649 = $(`<div id="html_c7fb7d679470418585ad805202f87649" style="width: 100.0%; height: 100.0%;"><b>04-43-216 NY31 @ NY260 Sweden-Walker Rd</b><br>ID: 35243140-2aa1-4654-a91b-cb4bfa4c3d19<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-216 NY31 @ NY260 Sweden-Walker Rd/35243140-2aa1-4654-a91b-cb4bfa4c3d19'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-216 NY31 @ NY260 Sweden-Walker Rd/04-43-216' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_bfe38f05480efd975f0bae9e825eef9b.setContent(html_c7fb7d679470418585ad805202f87649);
+            
+        
+
+        marker_7191323e8e8811cbf7b5b649783331d1.bindPopup(popup_bfe38f05480efd975f0bae9e825eef9b)
+        ;
+
+        
+    
+    
+            marker_7191323e8e8811cbf7b5b649783331d1.bindTooltip(
+                `<div>
+                     04-43-216 NY31 @ NY260 Sweden-Walker Rd
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_7090b29a88eea2a1d858c0059c531a08 = L.marker(
+                [43.05884169, -77.64230582],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_0e1a7d920c45d3a570a08c6835666af4 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_efd90d2eda1d9b1258c5b436258f2d86 = $(`<div id="html_efd90d2eda1d9b1258c5b436258f2d86" style="width: 100.0%; height: 100.0%;"><b>04-43-323.1 NY253 Lehigh Station Rd @ I390 SB ramps</b><br>ID: 39f78035-1b15-4410-aed8-ae0a4553d249<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-323.1 NY253 Lehigh Station Rd @ I390 SB ramps/39f78035-1b15-4410-aed8-ae0a4553d249'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-323.1 NY253 Lehigh Station Rd @ I390 SB ramps/04-43-323-1' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_0e1a7d920c45d3a570a08c6835666af4.setContent(html_efd90d2eda1d9b1258c5b436258f2d86);
+            
+        
+
+        marker_7090b29a88eea2a1d858c0059c531a08.bindPopup(popup_0e1a7d920c45d3a570a08c6835666af4)
+        ;
+
+        
+    
+    
+            marker_7090b29a88eea2a1d858c0059c531a08.bindTooltip(
+                `<div>
+                     04-43-323.1 NY253 Lehigh Station Rd @ I390 SB ramps
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_159a4272278696423527e421542955af = L.marker(
+                [42.90635462, -77.6966979],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_665ec58ca2fe06cda9a7254bd7e9403f = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_161ed45ffa7afcbf864dc46dbae3317a = $(`<div id="html_161ed45ffa7afcbf864dc46dbae3317a" style="width: 100.0%; height: 100.0%;"><b>04-42-34 - NY5 / US20 @ I 390 SB ramps</b><br>ID: 3a1f343c-534b-4b2d-a4cd-bb42e8adf0d0<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-42-34 - NY5 / US20 @ I 390 SB ramps/3a1f343c-534b-4b2d-a4cd-bb42e8adf0d0'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-42-34 - NY5 / US20 @ I 390 SB ramps/04-42-34' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_665ec58ca2fe06cda9a7254bd7e9403f.setContent(html_161ed45ffa7afcbf864dc46dbae3317a);
+            
+        
+
+        marker_159a4272278696423527e421542955af.bindPopup(popup_665ec58ca2fe06cda9a7254bd7e9403f)
+        ;
+
+        
+    
+    
+            marker_159a4272278696423527e421542955af.bindTooltip(
+                `<div>
+                     04-42-34 - NY5 / US20 @ I 390 SB ramps
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_1a815a0419f9e4f1f6c398f352ce62db = L.marker(
+                [43.19820921, -77.92228346],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_199bbe86e3ba9d4e31d5e8cfc0a8f033 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_9d2271b0a29d8e46aa1f65119f04d99b = $(`<div id="html_9d2271b0a29d8e46aa1f65119f04d99b" style="width: 100.0%; height: 100.0%;"><b>04-43-440 NY31 Brockport-Spencerport Rd @ Owens Rd</b><br>ID: 42bf8941-bfd3-4ba3-bf8f-b8ad400137d1<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-440 NY31 Brockport-Spencerport Rd @ Owens Rd/42bf8941-bfd3-4ba3-bf8f-b8ad400137d1'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-440 NY31 Brockport-Spencerport Rd @ Owens Rd/04-43-440' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_199bbe86e3ba9d4e31d5e8cfc0a8f033.setContent(html_9d2271b0a29d8e46aa1f65119f04d99b);
+            
+        
+
+        marker_1a815a0419f9e4f1f6c398f352ce62db.bindPopup(popup_199bbe86e3ba9d4e31d5e8cfc0a8f033)
+        ;
+
+        
+    
+    
+            marker_1a815a0419f9e4f1f6c398f352ce62db.bindTooltip(
+                `<div>
+                     04-43-440 NY31 Brockport-Spencerport Rd @ Owens Rd
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_4256fac05d1aa71d403e27398c2f3bd1 = L.marker(
+                [43.10838476, -77.57555544],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_3daa4c8897b2ef89f1da8993457fb4d2 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_6afdbbefabdef2f2caefdcbf64090923 = $(`<div id="html_6afdbbefabdef2f2caefdcbf64090923" style="width: 100.0%; height: 100.0%;"><b>04-43-165 I-590 @ Winton Rd (CR 98)</b><br>ID: 45242692-d45f-4f45-aef3-f49f17052390<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-165 I-590 @ Winton Rd (CR 98)/45242692-d45f-4f45-aef3-f49f17052390'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-165 I-590 @ Winton Rd (CR 98)/04-43-165' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_3daa4c8897b2ef89f1da8993457fb4d2.setContent(html_6afdbbefabdef2f2caefdcbf64090923);
+            
+        
+
+        marker_4256fac05d1aa71d403e27398c2f3bd1.bindPopup(popup_3daa4c8897b2ef89f1da8993457fb4d2)
+        ;
+
+        
+    
+    
+            marker_4256fac05d1aa71d403e27398c2f3bd1.bindTooltip(
+                `<div>
+                     04-43-165 I-590 @ Winton Rd (CR 98)
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_66e267c6b81c76252802d9ce4d513fad = L.marker(
+                [43.09008029, -77.5130375],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_e43620fa1d4348cd6c39c8183e566286 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_85b21951f9e0022269e2e646078f5e2c = $(`<div id="html_85b21951f9e0022269e2e646078f5e2c" style="width: 100.0%; height: 100.0%;"><b>04-43-007 - NY31 State Street and South Street</b><br>ID: 4597c5f2-fd30-4689-9814-fb501bc2c4da<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-007 - NY31 State Street and South Street/4597c5f2-fd30-4689-9814-fb501bc2c4da'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-007 - NY31 State Street and South Street/04-43-7' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_e43620fa1d4348cd6c39c8183e566286.setContent(html_85b21951f9e0022269e2e646078f5e2c);
+            
+        
+
+        marker_66e267c6b81c76252802d9ce4d513fad.bindPopup(popup_e43620fa1d4348cd6c39c8183e566286)
+        ;
+
+        
+    
+    
+            marker_66e267c6b81c76252802d9ce4d513fad.bindTooltip(
+                `<div>
+                     04-43-007 - NY31 State Street and South Street
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_516d737593a26f38a4cf1acd8e74fdf5 = L.marker(
+                [43.17477539, -77.73236045],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_a6e1086c442a79e4e542cef558f86dbe = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_934170094073c8b33333edf14533325d = $(`<div id="html_934170094073c8b33333edf14533325d" style="width: 100.0%; height: 100.0%;"><b>04-43-78 Spencerport Road and Elmgrove Road</b><br>ID: 46f551b7-a5e9-44ec-9670-072936f2f0de<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-78 Spencerport Road and Elmgrove Road/46f551b7-a5e9-44ec-9670-072936f2f0de'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-78 Spencerport Road and Elmgrove Road/04-43-78' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_a6e1086c442a79e4e542cef558f86dbe.setContent(html_934170094073c8b33333edf14533325d);
+            
+        
+
+        marker_516d737593a26f38a4cf1acd8e74fdf5.bindPopup(popup_a6e1086c442a79e4e542cef558f86dbe)
+        ;
+
+        
+    
+    
+            marker_516d737593a26f38a4cf1acd8e74fdf5.bindTooltip(
+                `<div>
+                     04-43-78 Spencerport Road and Elmgrove Road
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_3ddc10f2f656ece3c55c4efb3737545a = L.marker(
+                [43.16953661, -77.7015365],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_2325b6553e1d2dc1d65ba57318eba22b = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_c6fb6874c20e813a9e6c40a5085c664a = $(`<div id="html_c6fb6874c20e813a9e6c40a5085c664a" style="width: 100.0%; height: 100.0%;"><b>04-43-055 - NY31 @ Long Pond Road (CR136)</b><br>ID: 4a881717-c2eb-48df-b08a-5dd199f742a7<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-055 - NY31 @ Long Pond Road (CR136)/4a881717-c2eb-48df-b08a-5dd199f742a7'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-055 - NY31 @ Long Pond Road (CR136)/04-43-055' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_2325b6553e1d2dc1d65ba57318eba22b.setContent(html_c6fb6874c20e813a9e6c40a5085c664a);
+            
+        
+
+        marker_3ddc10f2f656ece3c55c4efb3737545a.bindPopup(popup_2325b6553e1d2dc1d65ba57318eba22b)
+        ;
+
+        
+    
+    
+            marker_3ddc10f2f656ece3c55c4efb3737545a.bindTooltip(
+                `<div>
+                     04-43-055 - NY31 @ Long Pond Road (CR136)
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_a7100edcb6759dde248b96a965595fd3 = L.marker(
+                [43.12801245, -77.49472871],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_20b78944667820dce6b73c9faad43b52 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_77c6b7a1ecce39b0972a4e8a9cf69cd5 = $(`<div id="html_77c6b7a1ecce39b0972a4e8a9cf69cd5" style="width: 100.0%; height: 100.0%;"><b>NY 153 Washington St & Panorama Trail South @ NY 441</b><br>ID: 4aa62527-c02c-4b0d-97c6-54a29b2de20e<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/NY 153 Washington St & Panorama Trail South @ NY 441/4aa62527-c02c-4b0d-97c6-54a29b2de20e'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/NY 153 Washington St & Panorama Trail South @ NY 441/04-43-256' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_20b78944667820dce6b73c9faad43b52.setContent(html_77c6b7a1ecce39b0972a4e8a9cf69cd5);
+            
+        
+
+        marker_a7100edcb6759dde248b96a965595fd3.bindPopup(popup_20b78944667820dce6b73c9faad43b52)
+        ;
+
+        
+    
+    
+            marker_a7100edcb6759dde248b96a965595fd3.bindTooltip(
+                `<div>
+                     NY 153 Washington St & Panorama Trail South @ NY 441
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_a964504a8feeb633befebca51cc0f70c = L.marker(
+                [43.10739833, -77.61589921],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_e028f70a30b5f67f0881e9f64a5614c9 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_b6a45b179df96e547f09754ec1fdf374 = $(`<div id="html_b6a45b179df96e547f09754ec1fdf374" style="width: 100.0%; height: 100.0%;"><b>04-43-327.1 NY15A E Henrietta Rd @ I-390 SB (Brighton)</b><br>ID: 50d5ef03-ff26-4042-9b80-77a7d54b3d1d<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-327.1 NY15A E Henrietta Rd @ I-390 SB (Brighton)/50d5ef03-ff26-4042-9b80-77a7d54b3d1d'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-327.1 NY15A E Henrietta Rd @ I-390 SB (Brighton)/04-43-327.1' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_e028f70a30b5f67f0881e9f64a5614c9.setContent(html_b6a45b179df96e547f09754ec1fdf374);
+            
+        
+
+        marker_a964504a8feeb633befebca51cc0f70c.bindPopup(popup_e028f70a30b5f67f0881e9f64a5614c9)
+        ;
+
+        
+    
+    
+            marker_a964504a8feeb633befebca51cc0f70c.bindTooltip(
+                `<div>
+                     04-43-327.1 NY15A E Henrietta Rd @ I-390 SB (Brighton)
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_afef7d917a2bfb720901996744fed75a = L.marker(
+                [43.2323565, -77.42851677],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_9e3e4dbec8897f436bc3f9be8efa1577 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_f31e6858eeff2e823a8ba7b6ca864648 = $(`<div id="html_f31e6858eeff2e823a8ba7b6ca864648" style="width: 100.0%; height: 100.0%;"><b>04-43-268 NY250@ Klem Road and Webster Road</b><br>ID: 553dc5bc-67f6-41e2-80f3-e38876d885ee<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-268 NY250@ Klem Road and Webster Road/553dc5bc-67f6-41e2-80f3-e38876d885ee'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-268 NY250@ Klem Road and Webster Road/04-43-268' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_9e3e4dbec8897f436bc3f9be8efa1577.setContent(html_f31e6858eeff2e823a8ba7b6ca864648);
+            
+        
+
+        marker_afef7d917a2bfb720901996744fed75a.bindPopup(popup_9e3e4dbec8897f436bc3f9be8efa1577)
+        ;
+
+        
+    
+    
+            marker_afef7d917a2bfb720901996744fed75a.bindTooltip(
+                `<div>
+                     04-43-268 NY250@ Klem Road and Webster Road
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_5aa3d19d36ff89393f8ee6c5e6af84aa = L.marker(
+                [43.01874726, -77.44140281],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_9b2d71860c8c1554ac0cb1164082275c = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_1f8d57a4e75e83794cb31a6a31eddb8b = $(`<div id="html_1f8d57a4e75e83794cb31a6a31eddb8b" style="width: 100.0%; height: 100.0%;"><b>04-44-69 NY-96 @ I490 WB</b><br>ID: 55bd00ad-7691-4544-aaa2-d6d2543693f9<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-44-69 NY-96 @ I490 WB/55bd00ad-7691-4544-aaa2-d6d2543693f9'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-44-69 NY-96 @ I490 WB/04-44-69' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_9b2d71860c8c1554ac0cb1164082275c.setContent(html_1f8d57a4e75e83794cb31a6a31eddb8b);
+            
+        
+
+        marker_5aa3d19d36ff89393f8ee6c5e6af84aa.bindPopup(popup_9b2d71860c8c1554ac0cb1164082275c)
+        ;
+
+        
+    
+    
+            marker_5aa3d19d36ff89393f8ee6c5e6af84aa.bindTooltip(
+                `<div>
+                     04-44-69 NY-96 @ I490 WB
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_87af4a249f8211c6a80766e2d3e6fd00 = L.marker(
+                [43.1983786, -77.94365353],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_a709db8408ef5bd886fac285eff7744f = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_636661ccaed8710f8d0e40f34112214d = $(`<div id="html_636661ccaed8710f8d0e40f34112214d" style="width: 100.0%; height: 100.0%;"><b>04-43-90 Fourth Section Road and Lake Road</b><br>ID: 56ae5bca-aa9f-4726-b816-2567e1615f47<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-90 Fourth Section Road and Lake Road/56ae5bca-aa9f-4726-b816-2567e1615f47'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-90 Fourth Section Road and Lake Road/04-43-90' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_a709db8408ef5bd886fac285eff7744f.setContent(html_636661ccaed8710f8d0e40f34112214d);
+            
+        
+
+        marker_87af4a249f8211c6a80766e2d3e6fd00.bindPopup(popup_a709db8408ef5bd886fac285eff7744f)
+        ;
+
+        
+    
+    
+            marker_87af4a249f8211c6a80766e2d3e6fd00.bindTooltip(
+                `<div>
+                     04-43-90 Fourth Section Road and Lake Road
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_73703604e2d50dd33f25c00ae2a35636 = L.marker(
+                [42.56219282, -77.6971235],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_c4a7b55691289473503d3553c27e2f07 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_16deb028d80896e642d09f120c9b0131 = $(`<div id="html_16deb028d80896e642d09f120c9b0131" style="width: 100.0%; height: 100.0%;"><b>04-42-05 - NY63 Main St @ NY256 Perine St & Milton St</b><br>ID: 59ac9490-9948-45f1-bfc3-2cc3e793f991<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-42-05 - NY63 Main St @ NY256 Perine St & Milton St/59ac9490-9948-45f1-bfc3-2cc3e793f991'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-42-05 - NY63 Main St @ NY256 Perine St & Milton St/04-42-5' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_c4a7b55691289473503d3553c27e2f07.setContent(html_16deb028d80896e642d09f120c9b0131);
+            
+        
+
+        marker_73703604e2d50dd33f25c00ae2a35636.bindPopup(popup_c4a7b55691289473503d3553c27e2f07)
+        ;
+
+        
+    
+    
+            marker_73703604e2d50dd33f25c00ae2a35636.bindTooltip(
+                `<div>
+                     04-42-05 - NY63 Main St @ NY256 Perine St & Milton St
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_2580fee6b02b2142ff33cb4dc6aa3d05 = L.marker(
+                [42.88705218, -77.28087059],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_3fb005a6ab3917452bcd30767b608c39 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_fdd17596397aae7c7197b91f03f34384 = $(`<div id="html_fdd17596397aae7c7197b91f03f34384" style="width: 100.0%; height: 100.0%;"><b>04-44-3A   South Main Street @ Chaplin and Niagara</b><br>ID: 5e156a3c-89af-455d-8913-c6746d8dff36<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-44-3A   South Main Street @ Chaplin and Niagara/5e156a3c-89af-455d-8913-c6746d8dff36'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-44-3A   South Main Street @ Chaplin and Niagara/04-44-3A' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_3fb005a6ab3917452bcd30767b608c39.setContent(html_fdd17596397aae7c7197b91f03f34384);
+            
+        
+
+        marker_2580fee6b02b2142ff33cb4dc6aa3d05.bindPopup(popup_3fb005a6ab3917452bcd30767b608c39)
+        ;
+
+        
+    
+    
+            marker_2580fee6b02b2142ff33cb4dc6aa3d05.bindTooltip(
+                `<div>
+                     04-44-3A   South Main Street @ Chaplin and Niagara
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_28d0276f29abc1bf07393110b982d5c4 = L.marker(
+                [43.10689583, -77.74671053],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_1978b866f3a38d04b6946ddba944d493 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_a66e2ff38a493de51c559385b973136b = $(`<div id="html_a66e2ff38a493de51c559385b973136b" style="width: 100.0%; height: 100.0%;"><b>04-43-418P - NY33A Chili Ave @ Chili Square, Target & Wegmans</b><br>ID: 600d285c-fa4a-4fb9-963d-31b1abe4d3d9<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-418P - NY33A Chili Ave @ Chili Square, Target & Wegmans/600d285c-fa4a-4fb9-963d-31b1abe4d3d9'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-418P - NY33A Chili Ave @ Chili Square, Target & Wegmans/04-43-418P' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_1978b866f3a38d04b6946ddba944d493.setContent(html_a66e2ff38a493de51c559385b973136b);
+            
+        
+
+        marker_28d0276f29abc1bf07393110b982d5c4.bindPopup(popup_1978b866f3a38d04b6946ddba944d493)
+        ;
+
+        
+    
+    
+            marker_28d0276f29abc1bf07393110b982d5c4.bindTooltip(
+                `<div>
+                     04-43-418P - NY33A Chili Ave @ Chili Square, Target & Wegmans
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_229f9e06cd2a1c4968f481ee158bdc87 = L.marker(
+                [43.08709065, -77.62474142],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_c2e338f5ccdbf670acc06018357120a6 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_15cf309f6bdf4cec5eeb63830a6bb56a = $(`<div id="html_15cf309f6bdf4cec5eeb63830a6bb56a" style="width: 100.0%; height: 100.0%;"><b>04-43-126 NY-252 @ Marketplace Drive</b><br>ID: 601c46c6-109d-49b0-8071-394aae90315c<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-126 NY-252 @ Marketplace Drive/601c46c6-109d-49b0-8071-394aae90315c'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-126 NY-252 @ Marketplace Drive/04-43-126' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_c2e338f5ccdbf670acc06018357120a6.setContent(html_15cf309f6bdf4cec5eeb63830a6bb56a);
+            
+        
+
+        marker_229f9e06cd2a1c4968f481ee158bdc87.bindPopup(popup_c2e338f5ccdbf670acc06018357120a6)
+        ;
+
+        
+    
+    
+            marker_229f9e06cd2a1c4968f481ee158bdc87.bindTooltip(
+                `<div>
+                     04-43-126 NY-252 @ Marketplace Drive
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_340badf2b1a8bff523fc028d61797c91 = L.marker(
+                [43.160296, -77.4498144],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_a5f258231809a8f5c01b2c50ccf96a96 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_e0973d3655dd4e72a0e38347495ed7f6 = $(`<div id="html_e0973d3655dd4e72a0e38347495ed7f6" style="width: 100.0%; height: 100.0%;"><b>04-43-486  Atlantic Avenue and Jackson Road</b><br>ID: 63c9f96c-45fb-4b20-b9b9-4fc245d78510<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-486  Atlantic Avenue and Jackson Road/63c9f96c-45fb-4b20-b9b9-4fc245d78510'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-486  Atlantic Avenue and Jackson Road/04-43-486' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_a5f258231809a8f5c01b2c50ccf96a96.setContent(html_e0973d3655dd4e72a0e38347495ed7f6);
+            
+        
+
+        marker_340badf2b1a8bff523fc028d61797c91.bindPopup(popup_a5f258231809a8f5c01b2c50ccf96a96)
+        ;
+
+        
+    
+    
+            marker_340badf2b1a8bff523fc028d61797c91.bindTooltip(
+                `<div>
+                     04-43-486  Atlantic Avenue and Jackson Road
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_deaf537062c5651157bf82e4a4a021a6 = L.marker(
+                [43.12678611, -77.55389749],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_2fc897ad74bf1bb86ab69a1d59a64bb9 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_572ae8250e691c7fcae1ada7483286ed = $(`<div id="html_572ae8250e691c7fcae1ada7483286ed" style="width: 100.0%; height: 100.0%;"><b>04-43-143  Rte. 590 @ Elmwood Ave</b><br>ID: 64a98654-983e-4a07-9ecc-44f528ce6ab1<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-143  Rte. 590 @ Elmwood Ave/64a98654-983e-4a07-9ecc-44f528ce6ab1'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-143  Rte. 590 @ Elmwood Ave/04-43-143' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_2fc897ad74bf1bb86ab69a1d59a64bb9.setContent(html_572ae8250e691c7fcae1ada7483286ed);
+            
+        
+
+        marker_deaf537062c5651157bf82e4a4a021a6.bindPopup(popup_2fc897ad74bf1bb86ab69a1d59a64bb9)
+        ;
+
+        
+    
+    
+            marker_deaf537062c5651157bf82e4a4a021a6.bindTooltip(
+                `<div>
+                     04-43-143  Rte. 590 @ Elmwood Ave
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_0a8f5f7cc5d70d5274b7a3a19a44eddb = L.marker(
+                [42.87809833, -77.26862724],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_cf101eaaeb9eb8c54cf3ed110d75f56e = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_97929d4c386f0705975b7a000a458ff6 = $(`<div id="html_97929d4c386f0705975b7a000a458ff6" style="width: 100.0%; height: 100.0%;"><b>04-44-12A NY5/US20 Eastern Blvd @ Ellen Polimeni Blvd (Booth St)</b><br>ID: 64f19dad-f3d6-4c95-8ab3-dfaf5b46ac21<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-44-12A NY5/US20 Eastern Blvd @ Ellen Polimeni Blvd (Booth St)/64f19dad-f3d6-4c95-8ab3-dfaf5b46ac21'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-44-12A NY5/US20 Eastern Blvd @ Ellen Polimeni Blvd (Booth St)/04-44-12A' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_cf101eaaeb9eb8c54cf3ed110d75f56e.setContent(html_97929d4c386f0705975b7a000a458ff6);
+            
+        
+
+        marker_0a8f5f7cc5d70d5274b7a3a19a44eddb.bindPopup(popup_cf101eaaeb9eb8c54cf3ed110d75f56e)
+        ;
+
+        
+    
+    
+            marker_0a8f5f7cc5d70d5274b7a3a19a44eddb.bindTooltip(
+                `<div>
+                     04-44-12A NY5/US20 Eastern Blvd @ Ellen Polimeni Blvd (Booth St)
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_44d053e5b69316e5de90758b7e5f2c94 = L.marker(
+                [43.09238025, -77.67906576],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_eaf31cf3cb4c735ce667082d7e4867f3 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_2c81e09a91035cece8745ea707a6c7eb = $(`<div id="html_2c81e09a91035cece8745ea707a6c7eb" style="width: 100.0%; height: 100.0%;"><b>04-43-121 - NY252 Jefferson Road @ East River Road (CR84)</b><br>ID: 687a8fc9-f88c-4520-bc5f-932f462c9795<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-121 - NY252 Jefferson Road @ East River Road (CR84)/687a8fc9-f88c-4520-bc5f-932f462c9795'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-121 - NY252 Jefferson Road @ East River Road (CR84)/04-43-121' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_eaf31cf3cb4c735ce667082d7e4867f3.setContent(html_2c81e09a91035cece8745ea707a6c7eb);
+            
+        
+
+        marker_44d053e5b69316e5de90758b7e5f2c94.bindPopup(popup_eaf31cf3cb4c735ce667082d7e4867f3)
+        ;
+
+        
+    
+    
+            marker_44d053e5b69316e5de90758b7e5f2c94.bindTooltip(
+                `<div>
+                     04-43-121 - NY252 Jefferson Road @ East River Road (CR84)
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_26dc6617e99d877b7c034813a3833127 = L.marker(
+                [43.2159889, -77.44664489],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_694ed81ddc4744e5083fa901d82f2521 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_c1c48e5be1a2d7870f76b41f6e00e2d6 = $(`<div id="html_c1c48e5be1a2d7870f76b41f6e00e2d6" style="width: 100.0%; height: 100.0%;"><b>04-43-297.1 - NY104 WB ramps @ Holt Road</b><br>ID: 70ffe11c-599e-4ebf-9169-cdfa01a97e16<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-297.1 - NY104 WB ramps @ Holt Road/70ffe11c-599e-4ebf-9169-cdfa01a97e16'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-297.1 - NY104 WB ramps @ Holt Road/04-43-297.1' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_694ed81ddc4744e5083fa901d82f2521.setContent(html_c1c48e5be1a2d7870f76b41f6e00e2d6);
+            
+        
+
+        marker_26dc6617e99d877b7c034813a3833127.bindPopup(popup_694ed81ddc4744e5083fa901d82f2521)
+        ;
+
+        
+    
+    
+            marker_26dc6617e99d877b7c034813a3833127.bindTooltip(
+                `<div>
+                     04-43-297.1 - NY104 WB ramps @ Holt Road
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_7b15a87d97e3d7c2fc29d29afdf326b7 = L.marker(
+                [43.21778972, -77.41914411],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_b5b27c37e253599de51203e8ef0c89c0 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_9a82dc4053fbb9936e9ba40353dfe0d1 = $(`<div id="html_9a82dc4053fbb9936e9ba40353dfe0d1" style="width: 100.0%; height: 100.0%;"><b>04-43-310 NY104 EB ramp @ Phillips Rd</b><br>ID: 73207371-b266-4ee2-b872-611386d0414d<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-310 NY104 EB ramp @ Phillips Rd/73207371-b266-4ee2-b872-611386d0414d'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-310 NY104 EB ramp @ Phillips Rd/04-43-310' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_b5b27c37e253599de51203e8ef0c89c0.setContent(html_9a82dc4053fbb9936e9ba40353dfe0d1);
+            
+        
+
+        marker_7b15a87d97e3d7c2fc29d29afdf326b7.bindPopup(popup_b5b27c37e253599de51203e8ef0c89c0)
+        ;
+
+        
+    
+    
+            marker_7b15a87d97e3d7c2fc29d29afdf326b7.bindTooltip(
+                `<div>
+                     04-43-310 NY104 EB ramp @ Phillips Rd
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_67a5b2f1018a9323b66a7995ef3ff776 = L.marker(
+                [43.20721045, -78.38794294],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_347551b8000b33f52313d5b322716bd2 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_9c6391ca856dbcd8ceede2fa887d0ead = $(`<div id="html_9c6391ca856dbcd8ceede2fa887d0ead" style="width: 100.0%; height: 100.0%;"><b>04-45-09 - NY31 & NY31A @ NY63 S Main St</b><br>ID: 7627fab2-8039-45e1-9a97-27fe3dc215d4<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-45-09 - NY31 & NY31A @ NY63 S Main St/7627fab2-8039-45e1-9a97-27fe3dc215d4'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-45-09 - NY31 & NY31A @ NY63 S Main St/04-45-9' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_347551b8000b33f52313d5b322716bd2.setContent(html_9c6391ca856dbcd8ceede2fa887d0ead);
+            
+        
+
+        marker_67a5b2f1018a9323b66a7995ef3ff776.bindPopup(popup_347551b8000b33f52313d5b322716bd2)
+        ;
+
+        
+    
+    
+            marker_67a5b2f1018a9323b66a7995ef3ff776.bindTooltip(
+                `<div>
+                     04-45-09 - NY31 & NY31A @ NY63 S Main St
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_3aa042e46e84ef5ce0abc6297f86b26a = L.marker(
+                [42.90226651, -77.4198806],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_2b0ce878f37ebbc2bb9e2a9246c34d0f = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_2042022c379344ee533918deac5dae95 = $(`<div id="html_2042022c379344ee533918deac5dae95" style="width: 100.0%; height: 100.0%;"><b>04-44-19 Elm Street and Maple Ave @ Main St</b><br>ID: 76832226-0670-42ac-b71b-9352b682313f<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-44-19 Elm Street and Maple Ave @ Main St/76832226-0670-42ac-b71b-9352b682313f'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-44-19 Elm Street and Maple Ave @ Main St/04-44-19' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_2b0ce878f37ebbc2bb9e2a9246c34d0f.setContent(html_2042022c379344ee533918deac5dae95);
+            
+        
+
+        marker_3aa042e46e84ef5ce0abc6297f86b26a.bindPopup(popup_2b0ce878f37ebbc2bb9e2a9246c34d0f)
+        ;
+
+        
+    
+    
+            marker_3aa042e46e84ef5ce0abc6297f86b26a.bindTooltip(
+                `<div>
+                     04-44-19 Elm Street and Maple Ave @ Main St
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_c128d3845373a70d56c933652a9ac2a7 = L.marker(
+                [43.19827652, -77.93005624],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_14a36af7f5cc926bbbce38b4c38d272c = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_ba04b6357c4ca1c54b85e15af9addec7 = $(`<div id="html_ba04b6357c4ca1c54b85e15af9addec7" style="width: 100.0%; height: 100.0%;"><b>04-43-477   Rte. 31 @ Gary Dr. & Walmart Plaza Driveway</b><br>ID: 7731ee1f-ff35-4cf9-89a3-cb1f0d9264cd<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-477   Rte. 31 @ Gary Dr. & Walmart Plaza Driveway/7731ee1f-ff35-4cf9-89a3-cb1f0d9264cd'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-477   Rte. 31 @ Gary Dr. & Walmart Plaza Driveway/04-43-477' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_14a36af7f5cc926bbbce38b4c38d272c.setContent(html_ba04b6357c4ca1c54b85e15af9addec7);
+            
+        
+
+        marker_c128d3845373a70d56c933652a9ac2a7.bindPopup(popup_14a36af7f5cc926bbbce38b4c38d272c)
+        ;
+
+        
+    
+    
+            marker_c128d3845373a70d56c933652a9ac2a7.bindTooltip(
+                `<div>
+                     04-43-477   Rte. 31 @ Gary Dr. & Walmart Plaza Driveway
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_9648d362c3ba5545c6292089caa108a3 = L.marker(
+                [42.71801891, -78.0026366],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_71a725d7d0439280bc0857391b92bd8f = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_7228c12f1936635326181fb8a1a5527b = $(`<div id="html_7228c12f1936635326181fb8a1a5527b" style="width: 100.0%; height: 100.0%;"><b>04-46-16 39 and Lake /Covington/Borden Ave</b><br>ID: 7bad14dd-f1a7-4ac4-ac37-856bae7b49a8<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-46-16 39 and Lake /Covington/Borden Ave/7bad14dd-f1a7-4ac4-ac37-856bae7b49a8'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-46-16 39 and Lake /Covington/Borden Ave/04-46-16' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_71a725d7d0439280bc0857391b92bd8f.setContent(html_7228c12f1936635326181fb8a1a5527b);
+            
+        
+
+        marker_9648d362c3ba5545c6292089caa108a3.bindPopup(popup_71a725d7d0439280bc0857391b92bd8f)
+        ;
+
+        
+    
+    
+            marker_9648d362c3ba5545c6292089caa108a3.bindTooltip(
+                `<div>
+                     04-46-16 39 and Lake /Covington/Borden Ave
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_a986869892d2ecf1298de02eb1f90168 = L.marker(
+                [43.06966457, -77.29760096],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_1ffe1588ea4e48868aa68739e82de5e5 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_8271b7d58e54a29275aca1985bc9132e = $(`<div id="html_8271b7d58e54a29275aca1985bc9132e" style="width: 100.0%; height: 100.0%;"><b>04-47-36 - NY31 @ NY31F / NY350 & S Erie St</b><br>ID: 7de5a1bc-c14a-4ea8-9d9b-b1a40c5e877a<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-47-36 - NY31 @ NY31F / NY350 & S Erie St/7de5a1bc-c14a-4ea8-9d9b-b1a40c5e877a'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-47-36 - NY31 @ NY31F / NY350 & S Erie St/None' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_1ffe1588ea4e48868aa68739e82de5e5.setContent(html_8271b7d58e54a29275aca1985bc9132e);
+            
+        
+
+        marker_a986869892d2ecf1298de02eb1f90168.bindPopup(popup_1ffe1588ea4e48868aa68739e82de5e5)
+        ;
+
+        
+    
+    
+            marker_a986869892d2ecf1298de02eb1f90168.bindTooltip(
+                `<div>
+                     04-47-36 - NY31 @ NY31F / NY350 & S Erie St
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_2914a64931b381b901fa8b913fd6a8e0 = L.marker(
+                [43.22039521, -78.38693562],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_564efcd8c4495ded44d553d2054957f5 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_75565a9d0fe3de5c6287b0c5c67694c5 = $(`<div id="html_75565a9d0fe3de5c6287b0c5c67694c5" style="width: 100.0%; height: 100.0%;"><b>04-45-06 - NY-63 @ NY-31 E & W Center St</b><br>ID: 83856e2c-33b4-4cc5-aaca-6ac1f78e73be<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-45-06 - NY-63 @ NY-31 E & W Center St/83856e2c-33b4-4cc5-aaca-6ac1f78e73be'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-45-06 - NY-63 @ NY-31 E & W Center St/None' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_564efcd8c4495ded44d553d2054957f5.setContent(html_75565a9d0fe3de5c6287b0c5c67694c5);
+            
+        
+
+        marker_2914a64931b381b901fa8b913fd6a8e0.bindPopup(popup_564efcd8c4495ded44d553d2054957f5)
+        ;
+
+        
+    
+    
+            marker_2914a64931b381b901fa8b913fd6a8e0.bindTooltip(
+                `<div>
+                     04-45-06 - NY-63 @ NY-31 E & W Center St
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_261f647fe60e7825f900a78de42bda6f = L.marker(
+                [43.1647136, -77.68802354],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_1cc5d7f2c521ab40c89dff233c23c0eb = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_5b6ab12ebfdb21babe723d177304478d = $(`<div id="html_5b6ab12ebfdb21babe723d177304478d" style="width: 100.0%; height: 100.0%;"><b>04-43-190 NY-31 @ Rossmore & Wegmans</b><br>ID: 847f3de1-621d-4960-a343-302b5a2bf7f4<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-190 NY-31 @ Rossmore & Wegmans/847f3de1-621d-4960-a343-302b5a2bf7f4'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-190 NY-31 @ Rossmore & Wegmans/None' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_1cc5d7f2c521ab40c89dff233c23c0eb.setContent(html_5b6ab12ebfdb21babe723d177304478d);
+            
+        
+
+        marker_261f647fe60e7825f900a78de42bda6f.bindPopup(popup_1cc5d7f2c521ab40c89dff233c23c0eb)
+        ;
+
+        
+    
+    
+            marker_261f647fe60e7825f900a78de42bda6f.bindTooltip(
+                `<div>
+                     04-43-190 NY-31 @ Rossmore & Wegmans
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_8813d5d131cb65f5b5f5cec26efb5d82 = L.marker(
+                [43.02866283, -77.43929116],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_24409a2029adbd681f255f041b59a9f6 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_4aa13c83b1f911224fb7b56232964118 = $(`<div id="html_4aa13c83b1f911224fb7b56232964118" style="width: 100.0%; height: 100.0%;"><b>04-44-34 NYS Rte. 96 @ Cobblestone/ East View Mall</b><br>ID: 8742b92f-3f70-4dbd-8e7e-20ca6adaf4be<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-44-34 NYS Rte. 96 @ Cobblestone/ East View Mall/8742b92f-3f70-4dbd-8e7e-20ca6adaf4be'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-44-34 NYS Rte. 96 @ Cobblestone/ East View Mall/04-44-34' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_24409a2029adbd681f255f041b59a9f6.setContent(html_4aa13c83b1f911224fb7b56232964118);
+            
+        
+
+        marker_8813d5d131cb65f5b5f5cec26efb5d82.bindPopup(popup_24409a2029adbd681f255f041b59a9f6)
+        ;
+
+        
+    
+    
+            marker_8813d5d131cb65f5b5f5cec26efb5d82.bindTooltip(
+                `<div>
+                     04-44-34 NYS Rte. 96 @ Cobblestone/ East View Mall
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_dff70260e1350f5be8cd105d434f9533 = L.marker(
+                [43.08725212, -77.61392498],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_65414ba62e3063022aaf147756f5a664 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_7bb5fcc5c4207c5f128801d496f35653 = $(`<div id="html_7bb5fcc5c4207c5f128801d496f35653" style="width: 100.0%; height: 100.0%;"><b>04-43-494P NY-252 @ Genesee Regional Market</b><br>ID: 90317298-1d75-45e8-a6e3-fc5905c9d02c<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-494P NY-252 @ Genesee Regional Market/90317298-1d75-45e8-a6e3-fc5905c9d02c'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-494P NY-252 @ Genesee Regional Market/None' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_65414ba62e3063022aaf147756f5a664.setContent(html_7bb5fcc5c4207c5f128801d496f35653);
+            
+        
+
+        marker_dff70260e1350f5be8cd105d434f9533.bindPopup(popup_65414ba62e3063022aaf147756f5a664)
+        ;
+
+        
+    
+    
+            marker_dff70260e1350f5be8cd105d434f9533.bindTooltip(
+                `<div>
+                     04-43-494P NY-252 @ Genesee Regional Market
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_033130ecc441463788dee61b402d0c5e = L.marker(
+                [42.79423318, -77.79975888],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_62193b4bcd7080c55db2f37eb6a626a1 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_82c2d1a7e610ccef9fa0dbfb34a847c1 = $(`<div id="html_82c2d1a7e610ccef9fa0dbfb34a847c1" style="width: 100.0%; height: 100.0%;"><b>East South Street and Center Street</b><br>ID: 9454bfed-2bb4-4ce5-8959-3cb25070b75e<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/East South Street and Center Street/9454bfed-2bb4-4ce5-8959-3cb25070b75e'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/East South Street and Center Street/None' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_62193b4bcd7080c55db2f37eb6a626a1.setContent(html_82c2d1a7e610ccef9fa0dbfb34a847c1);
+            
+        
+
+        marker_033130ecc441463788dee61b402d0c5e.bindPopup(popup_62193b4bcd7080c55db2f37eb6a626a1)
+        ;
+
+        
+    
+    
+            marker_033130ecc441463788dee61b402d0c5e.bindTooltip(
+                `<div>
+                     East South Street and Center Street
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_9b468a9420ba2e6475dcf1fd69bc83f2 = L.marker(
+                [43.2140153, -77.46127688],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_bb962eadb2447138f7a482ec5fd9391d = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_4c8498c20bcbfab684d48915f80d5f07 = $(`<div id="html_4c8498c20bcbfab684d48915f80d5f07" style="width: 100.0%; height: 100.0%;"><b>04-43-296.1 - NY104 ramps @ Hard Road</b><br>ID: 974832e9-a245-4b6b-b9f5-762f61ec5221<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-296.1 - NY104 ramps @ Hard Road/974832e9-a245-4b6b-b9f5-762f61ec5221'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-296.1 - NY104 ramps @ Hard Road/None' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_bb962eadb2447138f7a482ec5fd9391d.setContent(html_4c8498c20bcbfab684d48915f80d5f07);
+            
+        
+
+        marker_9b468a9420ba2e6475dcf1fd69bc83f2.bindPopup(popup_bb962eadb2447138f7a482ec5fd9391d)
+        ;
+
+        
+    
+    
+            marker_9b468a9420ba2e6475dcf1fd69bc83f2.bindTooltip(
+                `<div>
+                     04-43-296.1 - NY104 ramps @ Hard Road
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_9cce97322728371bbcdc6ca3df6c73c7 = L.marker(
+                [43.06441507, -77.35629185],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_f37eb19e1a1a89f82ae1854e258c2fa8 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_2ccac1faa981413684dd2ff3686b84cd = $(`<div id="html_2ccac1faa981413684dd2ff3686b84cd" style="width: 100.0%; height: 100.0%;"><b>04-47-55 - NY31 @ Immanuel Dr & Walmart drwy</b><br>ID: 97c44fbf-36fe-41ab-a148-a3a3e24c2cab<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-47-55 - NY31 @ Immanuel Dr & Walmart drwy/97c44fbf-36fe-41ab-a148-a3a3e24c2cab'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-47-55 - NY31 @ Immanuel Dr & Walmart drwy/04-47-55' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_f37eb19e1a1a89f82ae1854e258c2fa8.setContent(html_2ccac1faa981413684dd2ff3686b84cd);
+            
+        
+
+        marker_9cce97322728371bbcdc6ca3df6c73c7.bindPopup(popup_f37eb19e1a1a89f82ae1854e258c2fa8)
+        ;
+
+        
+    
+    
+            marker_9cce97322728371bbcdc6ca3df6c73c7.bindTooltip(
+                `<div>
+                     04-47-55 - NY31 @ Immanuel Dr & Walmart drwy
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_83380fd257c7e7e5834d3eb5c3c070f3 = L.marker(
+                [43.21545824, -77.43023069],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_3e0d1450f000ca10be7b1df66fc62012 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_c4d6ca0b24c9fa1acf896e278a45d3da = $(`<div id="html_c4d6ca0b24c9fa1acf896e278a45d3da" style="width: 100.0%; height: 100.0%;"><b>04-43-298 NY104 ramps @ NY250 North Ave</b><br>ID: 997e74ed-0920-4a46-ae66-ceac00797002<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-298 NY104 ramps @ NY250 North Ave/997e74ed-0920-4a46-ae66-ceac00797002'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-298 NY104 ramps @ NY250 North Ave/None' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_3e0d1450f000ca10be7b1df66fc62012.setContent(html_c4d6ca0b24c9fa1acf896e278a45d3da);
+            
+        
+
+        marker_83380fd257c7e7e5834d3eb5c3c070f3.bindPopup(popup_3e0d1450f000ca10be7b1df66fc62012)
+        ;
+
+        
+    
+    
+            marker_83380fd257c7e7e5834d3eb5c3c070f3.bindTooltip(
+                `<div>
+                     04-43-298 NY104 ramps @ NY250 North Ave
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_2047d0c46e9249d7724e32e2b10f0f1a = L.marker(
+                [43.0947758, -77.61352167],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_e4343fb2e82a61277bb67526c07f6120 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_055f176ecf1108b7a8a5f82f0514526a = $(`<div id="html_055f176ecf1108b7a8a5f82f0514526a" style="width: 100.0%; height: 100.0%;"><b>04-43-493 Brighton-Henrietta Town line RD @ Clay</b><br>ID: a1554bfd-6d55-4c7a-bbc7-4af47c6b675b<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-493 Brighton-Henrietta Town line RD @ Clay/a1554bfd-6d55-4c7a-bbc7-4af47c6b675b'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-493 Brighton-Henrietta Town line RD @ Clay/None' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_e4343fb2e82a61277bb67526c07f6120.setContent(html_055f176ecf1108b7a8a5f82f0514526a);
+            
+        
+
+        marker_2047d0c46e9249d7724e32e2b10f0f1a.bindPopup(popup_e4343fb2e82a61277bb67526c07f6120)
+        ;
+
+        
+    
+    
+            marker_2047d0c46e9249d7724e32e2b10f0f1a.bindTooltip(
+                `<div>
+                     04-43-493 Brighton-Henrietta Town line RD @ Clay
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_f250de21a52502769d336c3450e52e03 = L.marker(
+                [43.21240055, -77.51543261],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_9f701009fb5120d6c28a468ef7b749ac = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_c8f3b268f8ac844e79821a8b7cbdfb02 = $(`<div id="html_c8f3b268f8ac844e79821a8b7cbdfb02" style="width: 100.0%; height: 100.0%;"><b>04-43-219 NY104 EB ramps @ Bay Rd</b><br>ID: a1c12b86-d7d5-455c-85db-5603ccdddaa4<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-219 NY104 EB ramps @ Bay Rd/a1c12b86-d7d5-455c-85db-5603ccdddaa4'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-219 NY104 EB ramps @ Bay Rd/None' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_9f701009fb5120d6c28a468ef7b749ac.setContent(html_c8f3b268f8ac844e79821a8b7cbdfb02);
+            
+        
+
+        marker_f250de21a52502769d336c3450e52e03.bindPopup(popup_9f701009fb5120d6c28a468ef7b749ac)
+        ;
+
+        
+    
+    
+            marker_f250de21a52502769d336c3450e52e03.bindTooltip(
+                `<div>
+                     04-43-219 NY104 EB ramps @ Bay Rd
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_258203fb88b6f6e1f8d5bb1c7efc1965 = L.marker(
+                [43.08724259, -77.60920751],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_95c9b5c70f572b589167161ae00e9213 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_8e49af2792feb72928d25982836f61e5 = $(`<div id="html_8e49af2792feb72928d25982836f61e5" style="width: 100.0%; height: 100.0%;"><b>04-43-065 - NY15A @ NY252 Jefferson Rd</b><br>ID: a28f4080-ff79-4a6b-9388-43d5855eb14b<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-065 - NY15A @ NY252 Jefferson Rd/a28f4080-ff79-4a6b-9388-43d5855eb14b'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-065 - NY15A @ NY252 Jefferson Rd/None' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_95c9b5c70f572b589167161ae00e9213.setContent(html_8e49af2792feb72928d25982836f61e5);
+            
+        
+
+        marker_258203fb88b6f6e1f8d5bb1c7efc1965.bindPopup(popup_95c9b5c70f572b589167161ae00e9213)
+        ;
+
+        
+    
+    
+            marker_258203fb88b6f6e1f8d5bb1c7efc1965.bindTooltip(
+                `<div>
+                     04-43-065 - NY15A @ NY252 Jefferson Rd
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_70e6be61c41cba7faa6a78f8df7c6638 = L.marker(
+                [43.19154184, -77.6821386],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_9fd03690b0076170c623d14d1630e792 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_e90de6fef6218ccccf68a5746b4059ae = $(`<div id="html_e90de6fef6218ccccf68a5746b4059ae" style="width: 100.0%; height: 100.0%;"><b>04-43-308- I390 @ Ridgeway Ave.</b><br>ID: a3f89511-3e4b-4ebb-9aad-a67065e060a4<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-308- I390 @ Ridgeway Ave./a3f89511-3e4b-4ebb-9aad-a67065e060a4'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-308- I390 @ Ridgeway Ave./None' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_9fd03690b0076170c623d14d1630e792.setContent(html_e90de6fef6218ccccf68a5746b4059ae);
+            
+        
+
+        marker_70e6be61c41cba7faa6a78f8df7c6638.bindPopup(popup_9fd03690b0076170c623d14d1630e792)
+        ;
+
+        
+    
+    
+            marker_70e6be61c41cba7faa6a78f8df7c6638.bindTooltip(
+                `<div>
+                     04-43-308- I390 @ Ridgeway Ave.
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_62935396890edc05cc5e9c45defe074d = L.marker(
+                [43.09399926, -77.63308324],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_2ecbb4de828572fd9d841c6fc9a20b5a = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_b01bd6838d203efa7f6bae1339d74298 = $(`<div id="html_b01bd6838d203efa7f6bae1339d74298" style="width: 100.0%; height: 100.0%;"><b>04-43-69 Brighton Henrietta Town Line Road and West Henrietta Road</b><br>ID: a43581e9-8707-4d1a-ab7a-243acbd685ac<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-69 Brighton Henrietta Town Line Road and West Henrietta Road/a43581e9-8707-4d1a-ab7a-243acbd685ac'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-69 Brighton Henrietta Town Line Road and West Henrietta Road/None' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_2ecbb4de828572fd9d841c6fc9a20b5a.setContent(html_b01bd6838d203efa7f6bae1339d74298);
+            
+        
+
+        marker_62935396890edc05cc5e9c45defe074d.bindPopup(popup_2ecbb4de828572fd9d841c6fc9a20b5a)
+        ;
+
+        
+    
+    
+            marker_62935396890edc05cc5e9c45defe074d.bindTooltip(
+                `<div>
+                     04-43-69 Brighton Henrietta Town Line Road and West Henrietta Road
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_915d23567e9fdb19cfa2b7ef085ea80d = L.marker(
+                [43.00727073, -77.66673541],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_55bf0f4899b743efe484bd0b282eefcc = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_5998afef7e05ca4e71b5bba831cb7cbb = $(`<div id="html_5998afef7e05ca4e71b5bba831cb7cbb" style="width: 100.0%; height: 100.0%;"><b>04-43-309 - NY15 W Henrietta Rd @ I 390 Exit 11 SB ramps</b><br>ID: a88ae80a-1fbf-4a57-a487-c1a98c1c7ec0<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-309 - NY15 W Henrietta Rd @ I 390 Exit 11 SB ramps/a88ae80a-1fbf-4a57-a487-c1a98c1c7ec0'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-309 - NY15 W Henrietta Rd @ I 390 Exit 11 SB ramps/04-43-309' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_55bf0f4899b743efe484bd0b282eefcc.setContent(html_5998afef7e05ca4e71b5bba831cb7cbb);
+            
+        
+
+        marker_915d23567e9fdb19cfa2b7ef085ea80d.bindPopup(popup_55bf0f4899b743efe484bd0b282eefcc)
+        ;
+
+        
+    
+    
+            marker_915d23567e9fdb19cfa2b7ef085ea80d.bindTooltip(
+                `<div>
+                     04-43-309 - NY15 W Henrietta Rd @ I 390 Exit 11 SB ramps
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_b7a2353fe432e9fc8d65e332625ad6e9 = L.marker(
+                [43.06433471, -77.36660312],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_91fe9387ddc8b9061367f524dd61d084 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_8f1dfe7cbd1c19855329c9a4ed505565 = $(`<div id="html_8f1dfe7cbd1c19855329c9a4ed505565" style="width: 100.0%; height: 100.0%;"><b>04-47-57P - NY31 @ Macedon Pkwy (Lowe's)</b><br>ID: a8c725fa-8b4b-45b0-9a28-f80b99d0826f<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-47-57P - NY31 @ Macedon Pkwy (Lowe's)/a8c725fa-8b4b-45b0-9a28-f80b99d0826f'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-47-57P - NY31 @ Macedon Pkwy (Lowe's)/None' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_91fe9387ddc8b9061367f524dd61d084.setContent(html_8f1dfe7cbd1c19855329c9a4ed505565);
+            
+        
+
+        marker_b7a2353fe432e9fc8d65e332625ad6e9.bindPopup(popup_91fe9387ddc8b9061367f524dd61d084)
+        ;
+
+        
+    
+    
+            marker_b7a2353fe432e9fc8d65e332625ad6e9.bindTooltip(
+                `<div>
+                     04-47-57P - NY31 @ Macedon Pkwy (Lowe's)
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_7cb5578474ed3854eee057f2bebc3d11 = L.marker(
+                [43.08707377, -77.62952095],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_d63f0899b96ef3899adcc139c3ff1959 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_17d10c7728382d62832f913dc9b28115 = $(`<div id="html_17d10c7728382d62832f913dc9b28115" style="width: 100.0%; height: 100.0%;"><b>04-43-285 rt 252 and hylan drive</b><br>ID: a9130fa0-11b0-4147-ab5d-4520619c17fa<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-285 rt 252 and hylan drive/a9130fa0-11b0-4147-ab5d-4520619c17fa'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-285 rt 252 and hylan drive/None' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_d63f0899b96ef3899adcc139c3ff1959.setContent(html_17d10c7728382d62832f913dc9b28115);
+            
+        
+
+        marker_7cb5578474ed3854eee057f2bebc3d11.bindPopup(popup_d63f0899b96ef3899adcc139c3ff1959)
+        ;
+
+        
+    
+    
+            marker_7cb5578474ed3854eee057f2bebc3d11.bindTooltip(
+                `<div>
+                     04-43-285 rt 252 and hylan drive
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_dfb5760b4d1725c2613ef0368c143674 = L.marker(
+                [42.55869239, -77.69639122],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_54d7e927949e37c9040e81daa0869e60 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_c96191502c8dd3ebcd81956e1e00c4d8 = $(`<div id="html_c96191502c8dd3ebcd81956e1e00c4d8" style="width: 100.0%; height: 100.0%;"><b>04-42-04 - NY36 Clara Barton St @ School St & West Ave</b><br>ID: b5c520c4-02ce-4e4f-b6c9-78c672e1d6be<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-42-04 - NY36 Clara Barton St @ School St & West Ave/b5c520c4-02ce-4e4f-b6c9-78c672e1d6be'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-42-04 - NY36 Clara Barton St @ School St & West Ave/None' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_54d7e927949e37c9040e81daa0869e60.setContent(html_c96191502c8dd3ebcd81956e1e00c4d8);
+            
+        
+
+        marker_dfb5760b4d1725c2613ef0368c143674.bindPopup(popup_54d7e927949e37c9040e81daa0869e60)
+        ;
+
+        
+    
+    
+            marker_dfb5760b4d1725c2613ef0368c143674.bindTooltip(
+                `<div>
+                     04-42-04 - NY36 Clara Barton St @ School St & West Ave
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_b081f75b295646770845f026b7cf9f5d = L.marker(
+                [43.0871464, -77.61728607],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_f5e8e01e212c3da45ef8cb61f9d7c1b1 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_b086583a1ff1bb8556563ab802b2b837 = $(`<div id="html_b086583a1ff1bb8556563ab802b2b837" style="width: 100.0%; height: 100.0%;"><b>04-43-234 NY-252 Jefferson Rd @ Clay Road</b><br>ID: b830d982-68d3-41e7-a07f-c01b2dea0632<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-234 NY-252 Jefferson Rd @ Clay Road/b830d982-68d3-41e7-a07f-c01b2dea0632'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-234 NY-252 Jefferson Rd @ Clay Road/04-43-234' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_f5e8e01e212c3da45ef8cb61f9d7c1b1.setContent(html_b086583a1ff1bb8556563ab802b2b837);
+            
+        
+
+        marker_b081f75b295646770845f026b7cf9f5d.bindPopup(popup_f5e8e01e212c3da45ef8cb61f9d7c1b1)
+        ;
+
+        
+    
+    
+            marker_b081f75b295646770845f026b7cf9f5d.bindTooltip(
+                `<div>
+                     04-43-234 NY-252 Jefferson Rd @ Clay Road
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_783797c323161c357d57aac05317eb2e = L.marker(
+                [43.06441653, -77.31986065],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_d8ebb0c32f03cb1bf8a646adddb373c4 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_e62365abd8c8875a4d70a3a049115170 = $(`<div id="html_e62365abd8c8875a4d70a3a049115170" style="width: 100.0%; height: 100.0%;"><b>04-47-44 - NY31 @ Canandaigua Rd</b><br>ID: bd4145c5-220a-4182-bc2f-1adf781b8ea3<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-47-44 - NY31 @ Canandaigua Rd/bd4145c5-220a-4182-bc2f-1adf781b8ea3'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-47-44 - NY31 @ Canandaigua Rd/04-47-44' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_d8ebb0c32f03cb1bf8a646adddb373c4.setContent(html_e62365abd8c8875a4d70a3a049115170);
+            
+        
+
+        marker_783797c323161c357d57aac05317eb2e.bindPopup(popup_d8ebb0c32f03cb1bf8a646adddb373c4)
+        ;
+
+        
+    
+    
+            marker_783797c323161c357d57aac05317eb2e.bindTooltip(
+                `<div>
+                     04-47-44 - NY31 @ Canandaigua Rd
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_7e1e39e02fe2258947eeff478e254695 = L.marker(
+                [43.14870221, -77.70526051],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_c17bcaa219750f859882fcc70e763f38 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_b627a81f2ec4ea318e8c7112ca159b89 = $(`<div id="html_b627a81f2ec4ea318e8c7112ca159b89" style="width: 100.0%; height: 100.0%;"><b>04-43-383 Buffalo Road and Marway Circle</b><br>ID: c08427cd-51b8-4ecc-95c1-cdf6f9b526d4<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-383 Buffalo Road and Marway Circle/c08427cd-51b8-4ecc-95c1-cdf6f9b526d4'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-383 Buffalo Road and Marway Circle/None' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_c17bcaa219750f859882fcc70e763f38.setContent(html_b627a81f2ec4ea318e8c7112ca159b89);
+            
+        
+
+        marker_7e1e39e02fe2258947eeff478e254695.bindPopup(popup_c17bcaa219750f859882fcc70e763f38)
+        ;
+
+        
+    
+    
+            marker_7e1e39e02fe2258947eeff478e254695.bindTooltip(
+                `<div>
+                     04-43-383 Buffalo Road and Marway Circle
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_c10dbcb30ad2fe6744e2ae02ae45e355 = L.marker(
+                [42.73685797, -77.84027735],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_7db343edef531378939177145be7dd00 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_b5d72feabbba1c4efda9e5e38dee1e2d = $(`<div id="html_b5d72feabbba1c4efda9e5e38dee1e2d" style="width: 100.0%; height: 100.0%;"><b>04-42-35 - I390 SB ramps @ NY408</b><br>ID: c099dba2-5a26-47cc-92f7-07f8e87d4f9b<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-42-35 - I390 SB ramps @ NY408/c099dba2-5a26-47cc-92f7-07f8e87d4f9b'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-42-35 - I390 SB ramps @ NY408/None' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_7db343edef531378939177145be7dd00.setContent(html_b5d72feabbba1c4efda9e5e38dee1e2d);
+            
+        
+
+        marker_c10dbcb30ad2fe6744e2ae02ae45e355.bindPopup(popup_7db343edef531378939177145be7dd00)
+        ;
+
+        
+    
+    
+            marker_c10dbcb30ad2fe6744e2ae02ae45e355.bindTooltip(
+                `<div>
+                     04-42-35 - I390 SB ramps @ NY408
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_7a6e9fe385ea64048aa8a2a38d419370 = L.marker(
+                [43.12266657, -77.64671685],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_673852fbe705c1d96b2eba3c21a9335d = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_8ca0db717f6454dab9631110d81acbb2 = $(`<div id="html_8ca0db717f6454dab9631110d81acbb2" style="width: 100.0%; height: 100.0%;"><b>04-43-357 - NY383 Scottsville Rd @ I390 NB ramps</b><br>ID: c485b735-ae1b-48e6-9b1a-4c707e4039ec<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-357 - NY383 Scottsville Rd @ I390 NB ramps/c485b735-ae1b-48e6-9b1a-4c707e4039ec'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-357 - NY383 Scottsville Rd @ I390 NB ramps/04-43-357' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_673852fbe705c1d96b2eba3c21a9335d.setContent(html_8ca0db717f6454dab9631110d81acbb2);
+            
+        
+
+        marker_7a6e9fe385ea64048aa8a2a38d419370.bindPopup(popup_673852fbe705c1d96b2eba3c21a9335d)
+        ;
+
+        
+    
+    
+            marker_7a6e9fe385ea64048aa8a2a38d419370.bindTooltip(
+                `<div>
+                     04-43-357 - NY383 Scottsville Rd @ I390 NB ramps
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_1b5091e8dfb120f5651dada9f4412f22 = L.marker(
+                [43.09528797, -77.5140536],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_9be35ac8b2d9d226c4b66dc4282d406f = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_2fd63533fb42143c05aa9c7211379ee5 = $(`<div id="html_2fd63533fb42143c05aa9c7211379ee5" style="width: 100.0%; height: 100.0%;"><b>04-43-228 - NY96 N Main St @ NY153 Washington Rd</b><br>ID: c553f4cf-e4e7-4d46-87db-af11291332cc<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-228 - NY96 N Main St @ NY153 Washington Rd/c553f4cf-e4e7-4d46-87db-af11291332cc'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-228 - NY96 N Main St @ NY153 Washington Rd/None' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_9be35ac8b2d9d226c4b66dc4282d406f.setContent(html_2fd63533fb42143c05aa9c7211379ee5);
+            
+        
+
+        marker_1b5091e8dfb120f5651dada9f4412f22.bindPopup(popup_9be35ac8b2d9d226c4b66dc4282d406f)
+        ;
+
+        
+    
+    
+            marker_1b5091e8dfb120f5651dada9f4412f22.bindTooltip(
+                `<div>
+                     04-43-228 - NY96 N Main St @ NY153 Washington Rd
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_517e86ff3190a007d29ff1dd4963705f = L.marker(
+                [43.09393636, -77.73333155],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_a8bc4a11badcce8a513dbf43d06230ac = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_6e149240c7e8d913d6741c9542219e6d = $(`<div id="html_6e149240c7e8d913d6741c9542219e6d" style="width: 100.0%; height: 100.0%;"><b>Beaver Road and Archer Road</b><br>ID: c9e36080-5c16-45fb-b8ea-e01cb7f0e983<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/Beaver Road and Archer Road/c9e36080-5c16-45fb-b8ea-e01cb7f0e983'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/Beaver Road and Archer Road/None' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_a8bc4a11badcce8a513dbf43d06230ac.setContent(html_6e149240c7e8d913d6741c9542219e6d);
+            
+        
+
+        marker_517e86ff3190a007d29ff1dd4963705f.bindPopup(popup_a8bc4a11badcce8a513dbf43d06230ac)
+        ;
+
+        
+    
+    
+            marker_517e86ff3190a007d29ff1dd4963705f.bindTooltip(
+                `<div>
+                     Beaver Road and Archer Road
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_06b3fe3361f7af851dbb05d6a571051c = L.marker(
+                [42.88014877, -77.33693422],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_832bf78b704cefcf6ec1e16a91bec831 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_07e824984c6e56573b22305f4fe30a59 = $(`<div id="html_07e824984c6e56573b22305f4fe30a59" style="width: 100.0%; height: 100.0%;"><b>04-44-23 NY5/US20 @ Cooley Rd & Hickox Rd</b><br>ID: cad43036-7aee-4e2b-88b8-d92e6a754b42<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-44-23 NY5/US20 @ Cooley Rd & Hickox Rd/cad43036-7aee-4e2b-88b8-d92e6a754b42'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-44-23 NY5/US20 @ Cooley Rd & Hickox Rd/None' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_832bf78b704cefcf6ec1e16a91bec831.setContent(html_07e824984c6e56573b22305f4fe30a59);
+            
+        
+
+        marker_06b3fe3361f7af851dbb05d6a571051c.bindPopup(popup_832bf78b704cefcf6ec1e16a91bec831)
+        ;
+
+        
+    
+    
+            marker_06b3fe3361f7af851dbb05d6a571051c.bindTooltip(
+                `<div>
+                     04-44-23 NY5/US20 @ Cooley Rd & Hickox Rd
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_cdc06157f0021f21463a3041bbe6fef2 = L.marker(
+                [43.06056522, -77.4754878],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_3e32262c71d5b42078a5abd939f6bded = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_79f4d417e35fbba798ff162f07347a7c = $(`<div id="html_79f4d417e35fbba798ff162f07347a7c" style="width: 100.0%; height: 100.0%;"><b>04-43-260.1 - NY 96 Pittsford-Victor Road and Kreag Road</b><br>ID: d25ad24d-4ff2-4e84-8e7b-eb45ba84cac2<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-260.1 - NY 96 Pittsford-Victor Road and Kreag Road/d25ad24d-4ff2-4e84-8e7b-eb45ba84cac2'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-260.1 - NY 96 Pittsford-Victor Road and Kreag Road/None' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_3e32262c71d5b42078a5abd939f6bded.setContent(html_79f4d417e35fbba798ff162f07347a7c);
+            
+        
+
+        marker_cdc06157f0021f21463a3041bbe6fef2.bindPopup(popup_3e32262c71d5b42078a5abd939f6bded)
+        ;
+
+        
+    
+    
+            marker_cdc06157f0021f21463a3041bbe6fef2.bindTooltip(
+                `<div>
+                     04-43-260.1 - NY 96 Pittsford-Victor Road and Kreag Road
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_f2d6d42063219d9175cb7c5954e5c474 = L.marker(
+                [42.83492205, -77.71515797],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_fe3183ccc95f8c8d68d0e194baac79b5 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_dabd8710d0d7391aad284d2165823ed4 = $(`<div id="html_dabd8710d0d7391aad284d2165823ed4" style="width: 100.0%; height: 100.0%;"><b>04-42-22 - US20A @ NY256 W Lake Rd</b><br>ID: d2c845f6-cc6d-41a0-8265-0cc49a771960<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-42-22 - US20A @ NY256 W Lake Rd/d2c845f6-cc6d-41a0-8265-0cc49a771960'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-42-22 - US20A @ NY256 W Lake Rd/04-42-22' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_fe3183ccc95f8c8d68d0e194baac79b5.setContent(html_dabd8710d0d7391aad284d2165823ed4);
+            
+        
+
+        marker_f2d6d42063219d9175cb7c5954e5c474.bindPopup(popup_fe3183ccc95f8c8d68d0e194baac79b5)
+        ;
+
+        
+    
+    
+            marker_f2d6d42063219d9175cb7c5954e5c474.bindTooltip(
+                `<div>
+                     04-42-22 - US20A @ NY256 W Lake Rd
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_f49ac861f45e67f227dd1645af82c24e = L.marker(
+                [43.17888988, -77.68288486],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_c94dedcc875df9c8cd46def7adf903c0 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_605ac0af52fac37ae2c9260ab80ecab9 = $(`<div id="html_605ac0af52fac37ae2c9260ab80ecab9" style="width: 100.0%; height: 100.0%;"><b>Lexington Avenue and NY 390</b><br>ID: d358a4c4-504a-4fd5-9022-737170ed87ab<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/Lexington Avenue and NY 390/d358a4c4-504a-4fd5-9022-737170ed87ab'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/Lexington Avenue and NY 390/None' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_c94dedcc875df9c8cd46def7adf903c0.setContent(html_605ac0af52fac37ae2c9260ab80ecab9);
+            
+        
+
+        marker_f49ac861f45e67f227dd1645af82c24e.bindPopup(popup_c94dedcc875df9c8cd46def7adf903c0)
+        ;
+
+        
+    
+    
+            marker_f49ac861f45e67f227dd1645af82c24e.bindTooltip(
+                `<div>
+                     Lexington Avenue and NY 390
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_1a46884b90a458c147ebaeec0f2a4f6a = L.marker(
+                [42.87756512, -77.25591296],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_7ae4831cc3c911cc3e718b9fac94cae5 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_56b9191ed2ac6e24a6e65edc4d82e736 = $(`<div id="html_56b9191ed2ac6e24a6e65edc4d82e736" style="width: 100.0%; height: 100.0%;"><b>04-44-14A NY5/US20 Eastern Blvd @ Wegmans & Plaza</b><br>ID: d36f0d06-d46e-4a80-9fed-cae98a5888f2<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-44-14A NY5/US20 Eastern Blvd @ Wegmans & Plaza/d36f0d06-d46e-4a80-9fed-cae98a5888f2'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-44-14A NY5/US20 Eastern Blvd @ Wegmans & Plaza/04-44-14AP' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_7ae4831cc3c911cc3e718b9fac94cae5.setContent(html_56b9191ed2ac6e24a6e65edc4d82e736);
+            
+        
+
+        marker_1a46884b90a458c147ebaeec0f2a4f6a.bindPopup(popup_7ae4831cc3c911cc3e718b9fac94cae5)
+        ;
+
+        
+    
+    
+            marker_1a46884b90a458c147ebaeec0f2a4f6a.bindTooltip(
+                `<div>
+                     04-44-14A NY5/US20 Eastern Blvd @ Wegmans & Plaza
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_fc792c89ee70776a6dcd960799cbc92e = L.marker(
+                [42.87791244, -77.26237449],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_75baf38f29ef5bce12cf30fb6af64cf9 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_eaf9ac0ea13083748e16f2d3982206c0 = $(`<div id="html_eaf9ac0ea13083748e16f2d3982206c0" style="width: 100.0%; height: 100.0%;"><b>04-44-13A NY5/US20 Eastern Blvd @ Muar St</b><br>ID: d73aacf0-20a3-42ed-b90d-0aa0b00eeb84<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-44-13A NY5/US20 Eastern Blvd @ Muar St/d73aacf0-20a3-42ed-b90d-0aa0b00eeb84'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-44-13A NY5/US20 Eastern Blvd @ Muar St/04-44-13A' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_75baf38f29ef5bce12cf30fb6af64cf9.setContent(html_eaf9ac0ea13083748e16f2d3982206c0);
+            
+        
+
+        marker_fc792c89ee70776a6dcd960799cbc92e.bindPopup(popup_75baf38f29ef5bce12cf30fb6af64cf9)
+        ;
+
+        
+    
+    
+            marker_fc792c89ee70776a6dcd960799cbc92e.bindTooltip(
+                `<div>
+                     04-44-13A NY5/US20 Eastern Blvd @ Muar St
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_c17e63d388b9c0d4beb0da7cd3c3736c = L.marker(
+                [43.06436575, -77.3610181],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_4a6a77ed65b91dfa713b56341ca3297c = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_4f3fb72e4888c1605c8548826b659993 = $(`<div id="html_4f3fb72e4888c1605c8548826b659993" style="width: 100.0%; height: 100.0%;"><b>04-47-37 - NY31 @ Wayneport Rd</b><br>ID: d804f177-81e1-460f-ad38-f327f6288146<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-47-37 - NY31 @ Wayneport Rd/d804f177-81e1-460f-ad38-f327f6288146'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-47-37 - NY31 @ Wayneport Rd/04-47-37' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_4a6a77ed65b91dfa713b56341ca3297c.setContent(html_4f3fb72e4888c1605c8548826b659993);
+            
+        
+
+        marker_c17e63d388b9c0d4beb0da7cd3c3736c.bindPopup(popup_4a6a77ed65b91dfa713b56341ca3297c)
+        ;
+
+        
+    
+    
+            marker_c17e63d388b9c0d4beb0da7cd3c3736c.bindTooltip(
+                `<div>
+                     04-47-37 - NY31 @ Wayneport Rd
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_001f050d5aeec17a8e5affe3e35f6582 = L.marker(
+                [43.2103611, -77.44665876],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_55029f530d8d676e514e0e4eb067083a = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_cd0c02bf91d1efa5dd9e42227bc03248 = $(`<div id="html_cd0c02bf91d1efa5dd9e42227bc03248" style="width: 100.0%; height: 100.0%;"><b>04-43-410 Ridge Road and Holt Road</b><br>ID: d986e42d-c5cc-40e4-8958-69011f4215c0<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-410 Ridge Road and Holt Road/d986e42d-c5cc-40e4-8958-69011f4215c0'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-410 Ridge Road and Holt Road/None' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_55029f530d8d676e514e0e4eb067083a.setContent(html_cd0c02bf91d1efa5dd9e42227bc03248);
+            
+        
+
+        marker_001f050d5aeec17a8e5affe3e35f6582.bindPopup(popup_55029f530d8d676e514e0e4eb067083a)
+        ;
+
+        
+    
+    
+            marker_001f050d5aeec17a8e5affe3e35f6582.bindTooltip(
+                `<div>
+                     04-43-410 Ridge Road and Holt Road
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_5f63ea6560a8ea2fcd388c6f8e56bd96 = L.marker(
+                [43.22037746, -78.38885844],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_ec24ac7d49687d353d24af4a5321df3a = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_4e96f017f9acb9143fd25f239e069b6c = $(`<div id="html_4e96f017f9acb9143fd25f239e069b6c" style="width: 100.0%; height: 100.0%;"><b>04-45-24 - NY31E W Center St @ West Ave</b><br>ID: dcce386f-f0e4-46de-82cc-e6aa3232f044<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-45-24 - NY31E W Center St @ West Ave/dcce386f-f0e4-46de-82cc-e6aa3232f044'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-45-24 - NY31E W Center St @ West Ave/None' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_ec24ac7d49687d353d24af4a5321df3a.setContent(html_4e96f017f9acb9143fd25f239e069b6c);
+            
+        
+
+        marker_5f63ea6560a8ea2fcd388c6f8e56bd96.bindPopup(popup_ec24ac7d49687d353d24af4a5321df3a)
+        ;
+
+        
+    
+    
+            marker_5f63ea6560a8ea2fcd388c6f8e56bd96.bindTooltip(
+                `<div>
+                     04-45-24 - NY31E W Center St @ West Ave
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_bb0f458fd2ad03897705acd5c69cbc3d = L.marker(
+                [42.96173594, -77.09608058],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_bfee59c9199e72059ec767875e75c91a = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_ba4cb1537111b3628aab1372f3e5ed0e = $(`<div id="html_ba4cb1537111b3628aab1372f3e5ed0e" style="width: 100.0%; height: 100.0%;"><b>04-44-63  Rte. 96 @ Rte. 488</b><br>ID: e31761d7-da33-4f96-b231-a4a2c2790ee6<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-44-63  Rte. 96 @ Rte. 488/e31761d7-da33-4f96-b231-a4a2c2790ee6'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-44-63  Rte. 96 @ Rte. 488/04-44-63' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_bfee59c9199e72059ec767875e75c91a.setContent(html_ba4cb1537111b3628aab1372f3e5ed0e);
+            
+        
+
+        marker_bb0f458fd2ad03897705acd5c69cbc3d.bindPopup(popup_bfee59c9199e72059ec767875e75c91a)
+        ;
+
+        
+    
+    
+            marker_bb0f458fd2ad03897705acd5c69cbc3d.bindTooltip(
+                `<div>
+                     04-44-63  Rte. 96 @ Rte. 488
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_38405c500793f47b49027c27c5997817 = L.marker(
+                [42.88792058, -77.28151553],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_2757a2b9cb3276a0265b4cda73306a4d = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_e07b9669549f2b17c21e87cde71216b5 = $(`<div id="html_e07b9669549f2b17c21e87cde71216b5" style="width: 100.0%; height: 100.0%;"><b>West Avenue and North Main Street</b><br>ID: e34480f4-b0fc-47aa-b3b8-45f30e666ad5<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/West Avenue and North Main Street/e34480f4-b0fc-47aa-b3b8-45f30e666ad5'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/West Avenue and North Main Street/None' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_2757a2b9cb3276a0265b4cda73306a4d.setContent(html_e07b9669549f2b17c21e87cde71216b5);
+            
+        
+
+        marker_38405c500793f47b49027c27c5997817.bindPopup(popup_2757a2b9cb3276a0265b4cda73306a4d)
+        ;
+
+        
+    
+    
+            marker_38405c500793f47b49027c27c5997817.bindTooltip(
+                `<div>
+                     West Avenue and North Main Street
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_7fd9de9bf788c2796fa7588919a8f28c = L.marker(
+                [43.08725886, -77.60707335],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_d6f7c742a2dea9a3d27c80d56fc6c0a8 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_96fc6ac42f6c6480a42a770d7803bc51 = $(`<div id="html_96fc6ac42f6c6480a42a770d7803bc51" style="width: 100.0%; height: 100.0%;"><b>04-43-394P  RT 252 Jefferson Road @ Double Tree & Plaza Entrance</b><br>ID: e412aa9f-f62b-4828-851d-f73e06ad30a0<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-394P  RT 252 Jefferson Road @ Double Tree & Plaza Entrance/e412aa9f-f62b-4828-851d-f73e06ad30a0'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-394P  RT 252 Jefferson Road @ Double Tree & Plaza Entrance/04-43-394P' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_d6f7c742a2dea9a3d27c80d56fc6c0a8.setContent(html_96fc6ac42f6c6480a42a770d7803bc51);
+            
+        
+
+        marker_7fd9de9bf788c2796fa7588919a8f28c.bindPopup(popup_d6f7c742a2dea9a3d27c80d56fc6c0a8)
+        ;
+
+        
+    
+    
+            marker_7fd9de9bf788c2796fa7588919a8f28c.bindTooltip(
+                `<div>
+                     04-43-394P  RT 252 Jefferson Road @ Double Tree & Plaza Entrance
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_e819d9b703871ccf48974587d1baefc7 = L.marker(
+                [43.1808, -77.77375],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_45628b02eb515f425e9a3b3ed4a1bfad = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_63bf513663c33cfe5a02280a6cf5d4da = $(`<div id="html_63bf513663c33cfe5a02280a6cf5d4da" style="width: 100.0%; height: 100.0%;"><b>NY Rt 31 Spencerport Rd & Gillet Rd</b><br>ID: e6bb2e43-b269-4b16-8432-07d7b73c6f46<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/NY Rt 31 Spencerport Rd & Gillet Rd/e6bb2e43-b269-4b16-8432-07d7b73c6f46'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/NY Rt 31 Spencerport Rd & Gillet Rd/04-43-201' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_45628b02eb515f425e9a3b3ed4a1bfad.setContent(html_63bf513663c33cfe5a02280a6cf5d4da);
+            
+        
+
+        marker_e819d9b703871ccf48974587d1baefc7.bindPopup(popup_45628b02eb515f425e9a3b3ed4a1bfad)
+        ;
+
+        
+    
+    
+            marker_e819d9b703871ccf48974587d1baefc7.bindTooltip(
+                `<div>
+                     NY Rt 31 Spencerport Rd & Gillet Rd
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_808813a22b1c46770a45dec9833b99ec = L.marker(
+                [43.09750371, -77.51414022],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_8b6ec84d70c6bee2434da810c779fabc = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_e47896bfff61120003734daa65724b9b = $(`<div id="html_e47896bfff61120003734daa65724b9b" style="width: 100.0%; height: 100.0%;"><b>04-43-427 - NY96 East Ave @ French Rd</b><br>ID: e824d663-7630-4536-a0cb-2fdaad7ea558<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-427 - NY96 East Ave @ French Rd/e824d663-7630-4536-a0cb-2fdaad7ea558'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-427 - NY96 East Ave @ French Rd/None' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_8b6ec84d70c6bee2434da810c779fabc.setContent(html_e47896bfff61120003734daa65724b9b);
+            
+        
+
+        marker_808813a22b1c46770a45dec9833b99ec.bindPopup(popup_8b6ec84d70c6bee2434da810c779fabc)
+        ;
+
+        
+    
+    
+            marker_808813a22b1c46770a45dec9833b99ec.bindTooltip(
+                `<div>
+                     04-43-427 - NY96 East Ave @ French Rd
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_ca2aa55820f168ef25f9e6c89de4ac95 = L.marker(
+                [42.56107695, -77.69607154],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_c49217595d302863e9d56dc45d689c14 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_215bc9706d4df5f4f25d8c0d8afdc110 = $(`<div id="html_215bc9706d4df5f4f25d8c0d8afdc110" style="width: 100.0%; height: 100.0%;"><b>04-42-02 - NY63 Main St @ NY36 Ossian St</b><br>ID: ea55f159-f6a4-4858-91e6-7898ffdb5513<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-42-02 - NY63 Main St @ NY36 Ossian St/ea55f159-f6a4-4858-91e6-7898ffdb5513'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-42-02 - NY63 Main St @ NY36 Ossian St/None' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_c49217595d302863e9d56dc45d689c14.setContent(html_215bc9706d4df5f4f25d8c0d8afdc110);
+            
+        
+
+        marker_ca2aa55820f168ef25f9e6c89de4ac95.bindPopup(popup_c49217595d302863e9d56dc45d689c14)
+        ;
+
+        
+    
+    
+            marker_ca2aa55820f168ef25f9e6c89de4ac95.bindTooltip(
+                `<div>
+                     04-42-02 - NY63 Main St @ NY36 Ossian St
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_77b9c54c6c448c84905ebf2add36f69e = L.marker(
+                [43.12910332, -77.52386875],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_96a7deb32acf38674cd0bebaf8fc9a8a = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_d460fa31ab7237c7a1618c28488c9778 = $(`<div id="html_d460fa31ab7237c7a1618c28488c9778" style="width: 100.0%; height: 100.0%;"><b>04-43-254 - NY441 Linden Ave @ I490 WB ramps</b><br>ID: eacfd9da-cf3d-4782-9884-beb941dcdada<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-254 - NY441 Linden Ave @ I490 WB ramps/eacfd9da-cf3d-4782-9884-beb941dcdada'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-254 - NY441 Linden Ave @ I490 WB ramps/04-43-254' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_96a7deb32acf38674cd0bebaf8fc9a8a.setContent(html_d460fa31ab7237c7a1618c28488c9778);
+            
+        
+
+        marker_77b9c54c6c448c84905ebf2add36f69e.bindPopup(popup_96a7deb32acf38674cd0bebaf8fc9a8a)
+        ;
+
+        
+    
+    
+            marker_77b9c54c6c448c84905ebf2add36f69e.bindTooltip(
+                `<div>
+                     04-43-254 - NY441 Linden Ave @ I490 WB ramps
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_2051851c9c83b59bd73384b70a631d2a = L.marker(
+                [43.020176, -77.4408],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_1ba565a5a114a486bd5ba7b09509c7bd = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_e6b206d8fc0fa3ab3ca3869e6e5575ac = $(`<div id="html_e6b206d8fc0fa3ab3ca3869e6e5575ac" style="width: 100.0%; height: 100.0%;"><b>04-44-56P - NY96 @ Commerce Drive</b><br>ID: f393404c-081f-4eb5-b45a-b4518533863a<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-44-56P - NY96 @ Commerce Drive/f393404c-081f-4eb5-b45a-b4518533863a'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-44-56P - NY96 @ Commerce Drive/04-44-56P' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_1ba565a5a114a486bd5ba7b09509c7bd.setContent(html_e6b206d8fc0fa3ab3ca3869e6e5575ac);
+            
+        
+
+        marker_2051851c9c83b59bd73384b70a631d2a.bindPopup(popup_1ba565a5a114a486bd5ba7b09509c7bd)
+        ;
+
+        
+    
+    
+            marker_2051851c9c83b59bd73384b70a631d2a.bindTooltip(
+                `<div>
+                     04-44-56P - NY96 @ Commerce Drive
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_dbe3ccc74f35e659518ea92d9b8a5680 = L.marker(
+                [43.05885873, -77.64075978],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_ce119f8672aa33cd514b8872fe869274 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_307a9eabd2e79ed7dc06195ebdd18028 = $(`<div id="html_307a9eabd2e79ed7dc06195ebdd18028" style="width: 100.0%; height: 100.0%;"><b>04-43-323 NY253 Lehigh Station Rd @ I390 NB ramps</b><br>ID: fca79025-68ab-474f-854f-5c43d49557ba<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-43-323 NY253 Lehigh Station Rd @ I390 NB ramps/fca79025-68ab-474f-854f-5c43d49557ba'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-43-323 NY253 Lehigh Station Rd @ I390 NB ramps/04-43-323' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_ce119f8672aa33cd514b8872fe869274.setContent(html_307a9eabd2e79ed7dc06195ebdd18028);
+            
+        
+
+        marker_dbe3ccc74f35e659518ea92d9b8a5680.bindPopup(popup_ce119f8672aa33cd514b8872fe869274)
+        ;
+
+        
+    
+    
+            marker_dbe3ccc74f35e659518ea92d9b8a5680.bindTooltip(
+                `<div>
+                     04-43-323 NY253 Lehigh Station Rd @ I390 NB ramps
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_e4ee7c5d0d4db4f3efe743fec8f2bc0a = L.marker(
+                [43.03485, -77.44561],
+                {}
+            ).addTo(map_08cb13264141aef8344a1447edc032fa);
+        
+    
+        var popup_e9f0e70068561006bd376637baab292f = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_25440462f9b87544d49036e4dad7cad0 = $(`<div id="html_25440462f9b87544d49036e4dad7cad0" style="width: 100.0%; height: 100.0%;"><b>04-44-57P NY96 @ Eastview Commons</b><br>ID: fd675842-46c4-4e73-bcba-2c95e41ac69b<br><a href="javascript:void(0)" onclick="window.open(passTimeRangeToMarker('http://127.0.0.1:5000/intersection/04-44-57P NY96 @ Eastview Commons/fd675842-46c4-4e73-bcba-2c95e41ac69b'), '_blank')">View TMC Data</a><br><br><a href='http://127.0.0.1:5000/split_monitor/04-44-57P NY96 @ Eastview Commons/04-44-57P' target='_blank'>View Split Monitor</a></div>`)[0];
+                popup_e9f0e70068561006bd376637baab292f.setContent(html_25440462f9b87544d49036e4dad7cad0);
+            
+        
+
+        marker_e4ee7c5d0d4db4f3efe743fec8f2bc0a.bindPopup(popup_e9f0e70068561006bd376637baab292f)
+        ;
+
+        
+    
+    
+            marker_e4ee7c5d0d4db4f3efe743fec8f2bc0a.bindTooltip(
+                `<div>
+                     04-44-57P NY96 @ Eastview Commons
+                 </div>`,
+                {"sticky": true}
+            );
+        
+</script>
+</html>

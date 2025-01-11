@@ -1,0 +1,1 @@
+SELECT * FROM @split_table ORDER BY Timestamp

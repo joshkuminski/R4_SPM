@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TMC Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <script src="{{ url_for('static', filename='updateChart.js') }}"></script>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <style>
+         body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: rgb(208, 218, 223, 0) ;
+        }
+        #charts-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+        }
+        #controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        select {
+            padding: 5px;
+            font-size: 16px;
+        }
+        canvas {
+            max-width: 100%;
+            margin: 20px;
+        }
+        #anomaly-list {
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+        .anomaly-item {
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+        #resetZoom{
+            margin: 0px;
+            padding: 10px;
+            border-radius: 8px;
+            border: 2px solid rgb(0, 0, 0);
+            background-color: rgb(143, 58, 84) ;
+            color: rgb(255, 255, 255);
+            font-weight: 600;
+        }
+        #viewDetails{
+            margin: 0px;
+            padding: 10px;
+            border-radius: 8px;
+            border: 2px solid rgb(0, 0, 0);
+            background-color: rgb(143, 106, 58) ;
+            color: rgb(255, 255, 255);
+            font-weight: 600;
+        }
+        #resetSelection{
+            margin: 0px;
+            padding: 10px;
+            border-radius: 8px;
+            border: 2px solid rgb(0, 0, 0);
+            background-color: rgb(58, 116, 143) ;
+            color: rgb(255, 255, 255);
+            font-weight: 600;
+        }
+        #export-to-excel{
+            margin: 0px;
+            padding: 10px;
+            border-radius: 8px;
+            border: 2px solid rgb(0, 0, 0);
+            background-color: rgb(53, 117, 105) ;
+            color: rgb(255, 255, 255);
+            font-weight: 600;
+        }
+        .btn {
+            transition-duration: 0.4s;
+        }
+
+        .btn:hover {
+            color: rgb(58, 143, 127) !important;
+            background-color: rgb(207, 216, 220)!important;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+<h1>TMC Data for Intersection: {{ name }}</h1>
+
+<!-- Dropdown controls -->
+<div id="controls">
+    <div>
+        <label for="start-date">Start Date:</label>
+        <input type="date" id="start-date">
+        <label for="start-time">Start Time:</label>
+        <select id="start-time"></select>
+    </div>
+    <div>
+        <label for="end-date">End Date:</label>
+        <input type="date" id="end-date">
+        <label for="end-time">End Time:</label>
+        <select id="end-time"></select>
+    </div>
+</div>
+
+<div id="controls">
+    <label for="date-selector">Select Dates:</label>
+    <input id="date-selector" type="text" placeholder="Select dates">
+    <button id="calculate-median" class="btn">Add Median to Chart</button>
+    <button id="calculate-mean" class="btn">Add Mean to Chart</button>
+</div>
+
+<!-- Chart container -->
+<div id="charts-container">
+    <canvas id="volumeBarChart"></canvas>
+</div>
+
+<!-- Button container -->
+<!--<div class="button-container">-->
+<div class="d-flex justify-content-center gap-2">
+    <button id="resetZoom" class="btn">Reset Zoom</button>
+    <button id="viewDetails" class="btn">View TMC Details</button>
+    <button id="resetSelection" class="btn">Reset Selection</button>
+    <button id="export-to-excel" class="btn">Export to Excel</button>
+</div>
+
+<!-- Cluster container -->
+<div id="cluster-controls">
+    <label for="num-clusters">Number of Clusters:</label>
+    <select id="num-clusters">
+        <option value="2">2</option>
+        <option value="3" selected>3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+    </select>
+    <button id="toggle-cluster-highlights">Toggle Cluster Highlights</button>
+</div>
+
+<div id="charts-container">
+    <canvas id="statisticalChart"></canvas> <!-- New canvas for the median/mean chart -->
+</div>
+
+<!-- Anomaly container -->
+<div id="anomaly-list">
+    <h2>Anomalies</h2>
+    <div id="anomaly-items"></div>
+</div>
+
+<script>
+    //Datasets from Flask
+    const tmcData = JSON.parse('{{ tmc_data | safe }}');
+    const anomalies = JSON.parse('{{ anomalies | tojson | safe }}');
+    const clusters = JSON.parse('{{ clusters | safe }}');
+    const weatherData = JSON.parse('{{ weatherData | safe }}');
+    //console.log(weatherData);
+
+    let filteredData = [];
+
+    // Extract unique dates and times
+    const timestamps = tmcData.map(entry => new Date(entry.timestamp));
+    const uniqueDates = [...new Set(timestamps.map(ts => ts.toISOString().split('T')[0]))];
+    const uniqueTimes = [...new Set(timestamps.map(ts => ts.toISOString().split('T')[1].substring(0, 5)))];
+
+    // Initialize Flatpickr for date inputs
+    const startDateInput = document.getElementById('start-date');
+    const endDateInput = document.getElementById('end-date');
+
+    flatpickr(startDateInput, {
+        dateFormat: "Y-m-d",
+        enable: uniqueDates.map(date => new Date(date)),
+        onChange: updateChart
+    });
+
+    flatpickr(endDateInput, {
+        dateFormat: "Y-m-d",
+        enable: uniqueDates.map(date => new Date(date)),
+        defaultDate: uniqueDates[uniqueDates.length - 1],
+        onChange: updateChart
+    });
+
+    // Initialize Flatpickr for multiple date selection
+    const dateSelector = flatpickr("#date-selector", {
+        mode: "multiple", // Allow multiple date selection
+        dateFormat: "Y-m-d", // Ensure consistent date format
+    });
+
+
+     function generateTimeIntervals() {
+        const times = [];
+        let currentTime = new Date(0, 0, 0, 0, 0); // Start at 00:00
+        const endTime = new Date(0, 0, 0, 23, 45); // End at 23:45
+
+        while (currentTime <= endTime) {
+            times.push(
+                currentTime
+                    .toTimeString()
+                    .slice(0, 5) // Extract "HH:MM"
+            );
+            currentTime.setMinutes(currentTime.getMinutes() + 15);
+        }
+        return times;
+    }
+
+    
+
+    // Populate time dropdowns
+    const startTimeDropdown = document.getElementById('start-time');
+    const endTimeDropdown = document.getElementById('end-time');
+
+    const timeIntervals = generateTimeIntervals();
+
+    // Populate Start and End Time Dropdowns
+    timeIntervals.forEach((time, index) => {
+        const startOption = new Option(time, time);
+        startTimeDropdown.add(startOption);
+
+        const endOption = new Option(time, time);
+        if (index === timeIntervals.length - 1) {
+            endOption.selected = true; // Default to the last time
+        }
+        endTimeDropdown.add(endOption);
+    });
+
+    let selectedTimestamps = []; // Store selected timestamps
+    const lightData = tmcData.map(entry => entry.Light_Total);
+    const singleUnitTruckData = tmcData.map(entry => entry.Single_Unit_Total);
+    const articulatedTruckData = tmcData.map(entry => entry.Articulated_Total);
+    const busData = tmcData.map(entry => entry.Bus_Total);
+    const bicycleData = tmcData.map(entry => entry.Bicycle_Total);
+    const otherData = tmcData.map(entry => entry.Other);
+
+    //const temperatureData = weatherData.map(entry => entry.temperature_f );
+    //const rainData = weatherData.map(entry => entry.prcp );
+    //const snowData = weatherData.map(entry => entry.snow );
+
+    // Update chart data based on date and time selection
+    
+
+    // Attach event listeners to time dropdowns
+    startTimeDropdown.addEventListener('change', updateChart);
+    endTimeDropdown.addEventListener('change', updateChart);
+
+    // Button to reset zoom
+    document.getElementById('resetZoom').onclick = () => volumeBarChart.resetZoom();
+
+    // Reset Selection Button
+    document.getElementById('resetSelection').onclick = () => {
+        selectedTimestamps = [];
+        volumeBarChart.data.datasets[0].backgroundColor = volumeBarChart.data.labels.map(timestamp =>
+            anomalyTimestamps.has(timestamp) ? 'rgba(255, 99, 132, 0.6)' : 'rgba(54, 162, 235, 0.6)'
+        );
+        volumeBarChart.update();
+    };
+
+
+    //button to view details for selected timestamps
+    document.getElementById('viewDetails').onclick = () => {
+        if (selectedTimestamps.length > 0) {
+            const queryString = selectedTimestamps
+                .map(ts => `timestamp=${encodeURIComponent(ts)}`)
+                .join('&');
+            const name = encodeURIComponent('{{ name }}'); // Replace with dynamic data
+            const intersectionId = encodeURIComponent('{{ intersection_id }}'); // Replace with dynamic data
+            const url = `/movement_details?${queryString}&name=${name}&intersection_id=${intersectionId}`;
+
+            // Open the movement details page in a new window
+            window.open(url, '_blank');
+        } else {
+            alert("Please select at least one bar to view details.");
+        }
+    };
+
+</script>
+
+<script src="{{ url_for('static', filename='clustering.js') }}"></script>
+<script src="{{ url_for('static', filename='chart.js') }}"></script>
+<script src="{{ url_for('static', filename='statisticalChart.js') }}"></script>
+<script src="{{ url_for('static', filename='anomalies.js') }}"></script>
+<script src="{{ url_for('static', filename='median_mean.js') }}"></script>
+<script src="{{ url_for('static', filename='export.js') }}"></script>
+
+
+</body>
+</html>

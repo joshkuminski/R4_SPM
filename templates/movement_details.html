@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movement Details</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        .total-row {
+            font-weight: bold;
+            background-color: #f1f1f1;
+        }
+        .phf-row {
+            font-weight: bold;
+            background-color: #e6f7ff;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Movement Details</h1>
+
+<!-- TMC Data Table -->
+<table>
+    <thead>
+        <tr>
+            <th>Timestamp</th>
+            <th>NBL</th>
+            <th>NBT</th>
+            <th>NBR</th>
+            <th>SBL</th>
+            <th>SBT</th>
+            <th>SBR</th>
+            <th>EBL</th>
+            <th>EBT</th>
+            <th>EBR</th>
+            <th>WBL</th>
+            <th>WBT</th>
+            <th>WBR</th>
+            <th>Total</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for i in range(tmc_data|length) %}
+        <tr>
+            <td>{{ tmc_data[i].timestamp }}</td>
+            <td>{{ tmc_data[i].NBL }}</td>
+            <td>{{ tmc_data[i].NBT }}</td>
+            <td>{{ tmc_data[i].NBR }}</td>
+            <td>{{ tmc_data[i].SBL }}</td>
+            <td>{{ tmc_data[i].SBT }}</td>
+            <td>{{ tmc_data[i].SBR }}</td>
+            <td>{{ tmc_data[i].EBL }}</td>
+            <td>{{ tmc_data[i].EBT }}</td>
+            <td>{{ tmc_data[i].EBR }}</td>
+            <td>{{ tmc_data[i].WBL }}</td>
+            <td>{{ tmc_data[i].WBT }}</td>
+            <td>{{ tmc_data[i].WBR }}</td>
+            <td>{{ tmc_data[i].Total }}</td>
+        </tr>
+        {% if (i + 1) % 4 == 0 or i == tmc_data|length - 1 %}
+        <tr class="total-row">
+            <td>Total ({{ totals_and_phf[i // 4].start_timestamp }} to {{ totals_and_phf[i // 4].end_timestamp }})</td>
+            <td>{{ totals_and_phf[i // 4].totals.NBL }}</td>
+            <td>{{ totals_and_phf[i // 4].totals.NBT }}</td>
+            <td>{{ totals_and_phf[i // 4].totals.NBR }}</td>
+            <td>{{ totals_and_phf[i // 4].totals.SBL }}</td>
+            <td>{{ totals_and_phf[i // 4].totals.SBT }}</td>
+            <td>{{ totals_and_phf[i // 4].totals.SBR }}</td>
+            <td>{{ totals_and_phf[i // 4].totals.EBL }}</td>
+            <td>{{ totals_and_phf[i // 4].totals.EBT }}</td>
+            <td>{{ totals_and_phf[i // 4].totals.EBR }}</td>
+            <td>{{ totals_and_phf[i // 4].totals.WBL }}</td>
+            <td>{{ totals_and_phf[i // 4].totals.WBT }}</td>
+            <td>{{ totals_and_phf[i // 4].totals.WBR }}</td>
+            <td>{{ totals_and_phf[i // 4].totals.Total }}</td>
+        </tr>
+        <tr class="phf-row">
+            <td>PHF</td>
+            <td>{{ totals_and_phf[i // 4].phf.NBL }}</td>
+            <td>{{ totals_and_phf[i // 4].phf.NBT }}</td>
+            <td>{{ totals_and_phf[i // 4].phf.NBR }}</td>
+            <td>{{ totals_and_phf[i // 4].phf.SBL }}</td>
+            <td>{{ totals_and_phf[i // 4].phf.SBT }}</td>
+            <td>{{ totals_and_phf[i // 4].phf.SBR }}</td>
+            <td>{{ totals_and_phf[i // 4].phf.EBL }}</td>
+            <td>{{ totals_and_phf[i // 4].phf.EBT }}</td>
+            <td>{{ totals_and_phf[i // 4].phf.EBR }}</td>
+            <td>{{ totals_and_phf[i // 4].phf.WBL }}</td>
+            <td>{{ totals_and_phf[i // 4].phf.WBT }}</td>
+            <td>{{ totals_and_phf[i // 4].phf.WBR }}</td>
+            <td>{{ totals_and_phf[i // 4].phf.Total }}</td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- TMC Graphic  NEEDS WORK -->
+<div style="width: 400px; color: rgba(0, 0, 0, 0.87); background-color: rgb(255, 255, 255); transition: 450ms cubic-bezier(0.23, 1, 0.32, 1); box-sizing: border-box; font-family: Roboto, sans-serif; -webkit-tap-highlight-color: rgba(0, 0, 0, 0); box-shadow: rgba(0, 0, 0, 0.16) 0px 3px 10px, rgba(0, 0, 0, 0.23) 0px 3px 10px; border-radius: 2px;">
+    <div id="streaming_tmc_chord_diagram" class="diagram___37BgP movement_chart" style="width: 100%;">
+        <svg class="movement_chart_svg" width="382.656" height="382.656"><g>
+            <!-- Through Movements -->
+            <path class="movement exit_7 enter_3" data-enter-direction="3" data-exit-direction="7" d="M 312.656 172.9781112505228 312.656 133.00133166039313 L 69.99999999999999 133.0013316603932 70 172.97811125052283 Z" style="fill: rgb(255, 127, 14); opacity: 0.6;"></path>
+            <path class="movement exit_3 enter_7" data-enter-direction="7" data-exit-direction="3" d="M 70 206.82063069845256 70 249.7711083228775 L 312.656 249.77110832287747 312.656 206.82063069845253 Z" style="fill: rgb(214, 39, 40); opacity: 0.6;"></path>
+            <path class="movement exit_1 enter_5" data-enter-direction="5" data-exit-direction="1" d="M 209.18525805102468 312.656 214.3464826432455 312.656 L 214.3464826432455 70 209.18525805102468 70 Z" style="fill: rgb(44, 160, 44); opacity: 0.6;"></path>
+            <path class="movement exit_5 enter_1" data-enter-direction="1" data-exit-direction="5" d="M 172.9781112505228 70 167.85271434546215 70 L 167.85271434546215 312.656 172.9781112505228 312.656 Z" style="fill: rgb(31, 119, 180); opacity: 0.6;"></path>
+            <!-- XXXX Movements -->
+            <path class="movement exit_5 enter_3" data-enter-direction="3" data-exit-direction="5" d="M 312.656 186.328 312.656 177.9781112505228 Q 177.97811125052277 177.97811125052277 177.9781112505228 312.656 L 186.328 312.656 Q 186.32800000000003 186.32800000000003 312.656 186.328 Z" style="fill: rgb(255, 127, 14); opacity: 0.6;"></path>
+            <path class="movement exit_3 enter_5" data-enter-direction="5" data-exit-direction="3" d="M 219.3464826432455 312.656 228.68163278962777 312.656 Q 228.68163278962768 264.1062584692602 312.656 264.1062584692597 L 312.656 254.77110832287747 Q 219.34648264324537 254.77110832287786 219.3464826432455 312.656 Z" style="fill: rgb(44, 160, 44); opacity: 0.6;"></path>
+            <path class="movement exit_5 enter_7" data-enter-direction="7" data-exit-direction="5" d="M 70 254.7711083228775 70 262.91498787118365 Q 154.70883479715567 262.9149878711836 154.70883479715602 312.656 L 162.85271434546215 312.656 Q 162.8527143454615 254.77110832287784 70 254.7711083228775 Z" style="fill: rgb(214, 39, 40); opacity: 0.6;"></path>
+            <path class="movement exit_7 enter_1" data-enter-direction="1" data-exit-direction="7" d="M 162.85271434546215 70 157.4138251777499 70 Q 157.41382517774989 122.5624424926809 69.99999999999999 122.56244249268093 L 69.99999999999999 128.0013316603932 Q 162.85271434546203 128.00133166039305 162.85271434546215 70 Z" style="fill: rgb(31, 119, 180); opacity: 0.6;"></path>
+            <!-- XXXX Movements -->
+            <path class="movement exit_7 enter_5" data-enter-direction="5" data-exit-direction="7" d="M 196.328 312.656 204.18525805102468 312.656 Q 204.1852580510245 178.47074194897533 70 178.47074194897536 L 70 186.32800000000003 Q 196.32799999999983 186.32799999999986 196.328 312.656 Z" style="fill: rgb(44, 160, 44); opacity: 0.6;"></path>
+            <path class="movement exit_3 enter_1" data-enter-direction="1" data-exit-direction="3" d="M 186.328 70 180.88911083228774 70 Q 180.8891108322878 201.76688916771246 312.656 201.76688916771226 L 312.656 196.328 Q 186.32799999999992 196.32799999999966 186.328 70 Z" style="fill: rgb(31, 119, 180); opacity: 0.6;"></path>
+            <path class="movement exit_1 enter_3" data-enter-direction="3" data-exit-direction="1" d="M 312.656 128.00133166039313 312.656 122.49078711836053 Q 224.8570271852781 122.49078711836107 224.85702718527813 70 L 219.3464826432455 70 Q 219.34648264324537 128.00133166039345 312.656 128.00133166039313 Z" style="fill: rgb(255, 127, 14); opacity: 0.6;"></path>
+            <path class="movement exit_1 enter_7" data-enter-direction="7" data-exit-direction="1" d="M 70 196.32800000000003 70 201.82063069845256 Q 201.82063069845242 201.82063069845242 201.82063069845253 70 L 196.328 70 Q 196.32799999999983 196.32799999999983 70 196.32800000000003 Z" style="fill: rgb(214, 39, 40); opacity: 0.6;"></path></g>
+            <g></g>
+            <g id="markers">
+                <line class="divider" x1="191.328" y1="70" x2="191.328" y2="82.1328" style="stroke-width: 1; stroke: rgb(153, 153, 153);"></line>
+                <line class="divider" x1="312.656" y1="191.328" x2="300.5232" y2="191.328" style="stroke-width: 1; stroke: rgb(153, 153, 153);"></line>
+                <line class="divider" x1="191.328" y1="312.656" x2="191.328" y2="300.5232" style="stroke-width: 1; stroke: rgb(153, 153, 153);"></line>
+                <line class="divider" x1="70" y1="191.32800000000003" x2="82.1328" y2="191.328" style="stroke-width: 1; stroke: rgb(153, 153, 153);"></line>
+
+                <path class="exitArrow exit_1" data-direction="[object Object]" d="M196.328 65 L 224.85702718527813 65 L 210.59251359263908 55Z" style="stroke-width: 1; fill: rgb(31, 119, 180); opacity: 0.6;"></path>
+                <path class="exitArrow exit_3" data-direction="[object Object]" d="M317.656 196.328 L 317.656 264.1062584692597 L 327.656 230.21712923462985Z" style="stroke-width: 1; fill: rgb(255, 127, 14); opacity: 0.6;"></path>
+                <path class="exitArrow exit_5" data-direction="[object Object]" d="M186.328 317.656 L 154.70883479715602 317.656 L 170.518417398578 327.656Z" style="stroke-width: 1; fill: rgb(44, 160, 44); opacity: 0.6;"></path>
+                <path class="exitArrow exit_7" data-direction="[object Object]" d="M65 186.32800000000003 L 64.99999999999999 122.56244249268092 L 55 154.44522124634048Z" style="stroke-width: 1; fill: rgb(214, 39, 40); opacity: 0.6;"></path>
+               
+                <text data-original-title="" title="" id="direction_name_1" class="direction_name" text-anchor="middle" x="191.328" y="17.500618046971567" transform="rotate(0 191.328,17.500618046971567)">N</text>
+                <text data-original-title="" title="" id="direction_name_3" class="direction_name" text-anchor="middle" x="372.5719456118665" y="191.328" transform="rotate(-90 372.5719456118665,191.328)">E</text>
+                <text data-original-title="" title="" id="direction_name_5" class="direction_name" text-anchor="middle" x="191.328" y="372.5719456118665" transform="rotate(0 191.328,372.5719456118665)">S</text>
+                <text data-original-title="" title="" id="direction_name_7" class="direction_name" text-anchor="middle" x="17.500618046971567" y="191.32800000000003" transform="rotate(-90 17.500618046971567,191.32800000000003)">W</text>
+                <text class="movement exit_total exit_1" text-anchor="middle" data-direction="1" x="227.328" y="40.50061804697157" transform="rotate(0 227.328,40.50061804697157)" style="font-size: 12px; font-family: Courier New, Courier, monospace; font-weight: normal;">Out: 133</text>
+                <text class="movement exit_total exit_3" text-anchor="middle" data-direction="3" x="349.5719456118665" y="230.19025846925973" transform="rotate(-90 349.5719456118665,230.19025846925973)" style="font-size: 12px; font-family: Courier New, Courier, monospace; font-weight: normal;">Out: 4773</text>
+                <text class="movement exit_total exit_5" text-anchor="middle" data-direction="5" x="155.328" y="349.5719456118665" transform="rotate(0 155.328,349.5719456118665)" style="font-size: 12px; font-family: Courier New, Courier, monospace; font-weight: normal;">Out: 742</text>
+                <text class="movement exit_total exit_7" text-anchor="middle" data-direction="7" x="40.50061804697156" y="154.69153659556673" transform="rotate(-90 40.50061804697156,154.69153659556673)" style="font-size: 12px; font-family: Courier New, Courier, monospace; font-weight: normal;">Out: 4276</text>
+                <text class="movement enter_total enter_1" text-anchor="middle" data-direction="1" x="161.328" y="40.50061804697156" transform="rotate(0 161.328,40.50061804697156)" style="font-size: 12px; font-family: Courier New, Courier, monospace; font-weight: normal;">In: 115</text>
+                <text class="movement enter_total enter_3" text-anchor="middle" data-direction="3" x="349.5719456118665" y="154.40939355918027" transform="rotate(-90 349.5719456118665,154.40939355918027)" style="font-size: 12px; font-family: Courier New, Courier, monospace; font-weight: normal;">In: 4339</text>
+                <text class="movement enter_total enter_5" text-anchor="middle" data-direction="5" x="221.328" y="349.5719456118665" transform="rotate(0 221.328,349.5719456118665)" style="font-size: 12px; font-family: Courier New, Courier, monospace; font-weight: normal;">In: 824</text>
+                <text class="movement enter_total enter_7" text-anchor="middle" data-direction="7" x="40.50061804697157" y="229.62149393559184" transform="rotate(-90 40.50061804697157,229.62149393559184)" style="font-size: 12px; font-family: Courier New, Courier, monospace; font-weight: normal;">In: 4646</text>
+                <text x="327.656" y="152.98972145545798" data-direction="3" text-anchor="start" class="movement enter enter_3 exit_7" transform="rotate(0 327.656,152.98972145545798)" style="font-weight: normal;"></text>
+                <text x="55" y="228.29586951066503" data-direction="7" text-anchor="end" class="movement enter enter_7 exit_3" transform="rotate(0 55,228.29586951066503)" style="font-weight: normal;"></text>
+                <text x="211.7658703471351" y="327.656" data-direction="5" text-anchor="end" class="movement enter enter_5 exit_1" transform="rotate(-90 211.7658703471351,327.656)" style="font-weight: normal;"></text>
+                <text x="170.41541279799247" y="55" data-direction="1" text-anchor="start" class="movement enter enter_1 exit_5" transform="rotate(-90 170.41541279799247,55)" style="font-weight: normal;"></text>
+                <text x="327.656" y="182.1530556252614" data-direction="3" text-anchor="start" class="movement enter enter_3 exit_5" transform="rotate(0 327.656,182.1530556252614)" style="font-weight: normal;"></text>
+                <text x="224.01405771643664" y="327.656" data-direction="5" text-anchor="end" class="movement enter enter_5 exit_3" transform="rotate(-90 224.01405771643664,327.656)" style="font-weight: normal;"></text>
+                <text x="55" y="258.8430480970306" data-direction="7" text-anchor="end" class="movement enter enter_7 exit_5" transform="rotate(0 55,258.8430480970306)" style="font-weight: normal;"></text>
+                <text x="160.13326976160602" y="55" data-direction="1" text-anchor="start" class="movement enter enter_1 exit_7" transform="rotate(-90 160.13326976160602,55)" style="font-weight: normal;"></text>
+                <text x="200.25662902551232" y="327.656" data-direction="5" text-anchor="end" class="movement enter enter_5 exit_7" transform="rotate(-90 200.25662902551232,327.656)" style="font-weight: normal;"></text>
+                <text x="183.60855541614387" y="55" data-direction="1" text-anchor="start" class="movement enter enter_1 exit_3" transform="rotate(-90 183.60855541614387,55)" style="font-weight: normal;"></text>
+                <text x="327.656" y="125.24605938937682" data-direction="3" text-anchor="start" class="movement enter enter_3 exit_1" transform="rotate(0 327.656,125.24605938937682)" style="font-weight: normal;"></text>
+                <text x="55" y="199.0743153492263" data-direction="7" text-anchor="end" class="movement enter enter_7 exit_1" transform="rotate(0 55,199.0743153492263)" style="font-weight: normal;"></text>
+            </g>
+        </svg>
+    </div>
+</div>
+</body>
+</html>
