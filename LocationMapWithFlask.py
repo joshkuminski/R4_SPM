@@ -323,7 +323,7 @@ def create_folium_map(mio_locations, other_locations, output_file="map.html"):
 
     # Add red markers for Non-Miovision locations
     for loc in other_locations:
-        split_url_nonMio = f"http://10.4.10.179:5000/split_monitor/{loc['name']}/{loc['name']}"
+        split_url_nonMio = f"http://127.0.0.1:5000/split_monitor/{loc['name']}/{loc['name']}"
         popup_html_nonMio = (
             f"<b>{loc['name']}</b><br>Main Route: {loc['main_route']}<br>Intersect Route: {loc['intersect_route']}"
             f"<br><a href='{split_url_nonMio}' target='_blank'>View Split Monitor</a>"
