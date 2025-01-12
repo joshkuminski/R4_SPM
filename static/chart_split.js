@@ -14,11 +14,7 @@ const terminationColors = {
 
 // Function to filter data for the selected phase
 function getPhaseData(phase) {
-    //return SplitData.filter(entry => entry[`SP${phase}_split`] !== null).map(entry => ({
-    //    x: entry.Timestamp, // Convert timestamp to ISO format
-    //    y: parseFloat(entry[`SP${phase}_split`]), // Phase duration in seconds
-    //    termination: entry[`SP${phase}_term`] || "None", // Termination type
-    //}));
+    
     return SplitData.filter(entry => entry[`SP${phase}_split`] !== null).map(entry => {
         const duration = parseFloat(entry[`SP${phase}_split`]); // Phase duration
         const termination = entry[`SP${phase}_term`] || "None"; // Termination type
@@ -30,16 +26,15 @@ function getPhaseData(phase) {
             x: entry.Timestamp, // Convert timestamp to ISO format
             y: duration, // Phase duration in seconds
             termination: classification, // Classification including 'Skip'
+            cycle: entry.Cycle,
+            pat: entry.Pattern,
         };
     });
 }
 
 
 
-
-
-
-// Function to create interval lines for the selected phase
+// Function to create phase programmed split times
 function createIntervalLines(phase, date, controllerData) {
     const intervals = [];
     let startTimes = [];
@@ -93,6 +88,7 @@ function createIntervalLines(phase, date, controllerData) {
                 pointRadius: 0, // No data points
                 fill: false, // No fill under the line
                 type: 'line', // Line type dataset
+                yAxisID: "y",
             });
         }
     });
@@ -108,6 +104,7 @@ function updateSplitChart() {
 
     // Get filtered data for the selected phase
     const phaseData = getPhaseData(selectedPhase);
+
     // Create datasets for intervals
     const intervalDatasets = createIntervalLines(selectedPhase, selectedDate, controller_data);
 
@@ -124,8 +121,13 @@ function updateSplitChart() {
         return entryDate >= startDateTime && entryDate <= endDateTime;
     });
 
+    // Filter Cycle length data for the selected date
+    const filteredData_cycle = filteredData.filter(entry => {
+        const action = entry.pat; 
+        return action !== 254;
+    });
 
-    
+
     // Custom legend plugin
     const customLegendPlugin = {
         id: 'customLegend',
@@ -195,7 +197,8 @@ function updateSplitChart() {
                 "1": "rgba(42, 100, 139, 0.14)",    // Blue
                 "2": "rgba(81, 184, 149, 0.14)",    // Green
                 "3": "rgba(163, 72, 72, 0.14)",     // Red
-                "4": "rgba(163, 157, 72, 0.14)"    // Yellow
+                "4": "rgba(163, 157, 72, 0.14)",    // Yellow
+                "5": "rgba(104, 72, 163, 0.14)"    // Purple
             };
 
             // Default color for undefined patterns
@@ -218,7 +221,7 @@ function updateSplitChart() {
                 // Fallback values if `hours` or `min` is not defined
                 const startTime = ['00:00:00', '06:00:00'];
                 const endTime = ['06:00:00', '24:00:00'];
-                console.log("Fallback start and end times:", startTime, endTime);
+                //console.log("Fallback start and end times:", startTime, endTime);
             }
             
             
@@ -280,7 +283,7 @@ function updateSplitChart() {
             function calculateTerminationAverages(groupedData) {
                 return groupedData.map((group) => {
                     // Initialize counters for each termination type
-                    const terminationCounts = { F: 0, G: 0, Skip: 0 };
+                    const terminationCounts = { F: 0, G: 0, M: 0, Skip: 0 };
                     let totalEntries = group.data.length;
             
                     // Count occurrences of each termination type in the group
@@ -293,18 +296,28 @@ function updateSplitChart() {
                     });
     
                      // Calculate the average split time
+                     /*
                     const avgSplitTime =
                         group.data.length > 0
                             ? group.data.reduce((sum, entry) => sum + entry.y, 0) / group.data.length
                             : 0; // Avoid division by zero
-            
+                    */
+                    // Calculate the average split time, excluding entries where entry.y === 0
+                    const avgSplitTime =
+                    group.data.length > 0
+                        ? group.data
+                            .filter(entry => entry.y !== 0) // Exclude entries with y === 0
+                            .reduce((sum, entry) => sum + entry.y, 0) /
+                        group.data.filter(entry => entry.y !== 0).length // Use filtered length
+                        : 0; // Avoid division by zero
 
                     // Calculate averages
                     const averages = {
                         pattern: group.pattern, // Pattern name
                         Split_Time: avgSplitTime. toFixed(2),
-                        F: (terminationCounts.F / totalEntries) * 100 || 0, // Average percentage
+                        F: ((terminationCounts.F) / totalEntries) * 100 || 0, // Average percentage
                         G: (terminationCounts.G / totalEntries) * 100 || 0,
+                        M: (terminationCounts.M / totalEntries) * 100 || 0,
                         Skip: (terminationCounts.Skip / totalEntries) * 100 || 0,
                     };
             
@@ -326,6 +339,7 @@ function updateSplitChart() {
                     `Avg. Split: ${(Number(terminationAverages[index]?.Split_Time) || 0).toFixed(2)} seconds`,
                     `Force Offs (F): ${(Number(terminationAverages[index]?.F) || 0).toFixed(2)}%`,
                     `Gap Outs (G): ${(Number(terminationAverages[index]?.G) || 0).toFixed(2)}%`,
+                    `Max Outs (M): ${(Number(terminationAverages[index]?.M) || 0).toFixed(2)}%`,
                     `Skips: ${(Number(terminationAverages[index]?.Skip) || 0).toFixed(2)}%`,
                 ];
 
@@ -355,6 +369,11 @@ function updateSplitChart() {
         x: data.x,
         y: data.y,
         backgroundColor: terminationColors[data.termination] || "rgba(200, 200, 200, 1)",
+        cycle: data.cycle,
+    }));
+    const dataset_cycle = filteredData_cycle.map(data => ({
+        x: data.x,
+        y: data.cycle,
     }));
 
     // Destroy the previous chart instance if it exists
@@ -372,6 +391,17 @@ function updateSplitChart() {
                     data: dataset.map(d => ({ x: d.x, y: d.y })),
                     backgroundColor: dataset.map(d => d.backgroundColor),
                     pointRadius: 5,
+                    yAxisID: "y",
+                },
+                {
+                    label: `Cycle Length`,
+                    data: dataset_cycle.map(d => ({ x: d.x, y: d.y })),
+                    yAxisID: "y2",
+                    borderColor: 'rgba(60, 29, 133, 0.6)', // Line color
+                    borderWidth: 2,
+                    pointRadius: 0, // No data points
+                    fill: false, // No fill under the line
+                    type: 'line', // Line type dataset
                 },
                 ...intervalDatasets,
 
@@ -391,10 +421,6 @@ function updateSplitChart() {
                 mode: 'index', 
                 tooltip: {
                     callbacks: {
-                        //label: function (context) {
-                        //    const dataPoint = filteredData[context.dataIndex];
-                        //    return `Duration: ${context.raw.y}s, Termination: ${dataPoint.termination}`;
-                        //},
                         label: function (context) {
                             const dataPoint = context.raw; // Access the raw data point
                             const timestamp = dataPoint.x; // Timestamp
@@ -439,10 +465,28 @@ function updateSplitChart() {
                 },
                 y: {
                     beginAtZero: true,
+                    position: "left",
                     title: {
                         display: true,
                         text: "Phase Duration (s)",
                     },
+                },
+            },
+            y2: {
+                type: "linear",
+                position: "right",
+                title: {
+                    display: true,
+                    text: "Cycle Length",
+                },
+                ticks: {
+                    // Scale down the values for Dataset 2
+                    callback: function (value) {
+                        return value // / 10; // Adjust this factor as needed
+                    },
+                },
+                grid: {
+                    drawOnChartArea: false, // Keep gridlines from overlapping
                 },
             },
         },

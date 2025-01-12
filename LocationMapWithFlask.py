@@ -124,6 +124,7 @@ def fetch_locations_from_db():
         for row in cursor.fetchall()
     ]
 
+    #cursor.execute("SELECT * FROM all_R4_traffic_signals WHERE Miovision = 0 OR Miovision IS NULL")
     cursor.execute("SELECT * FROM addToMap")
 
     other_locations = [
@@ -291,7 +292,7 @@ def fetch_controller_actions(day_plan, conn, customId):
     return df
 
 
-def create_folium_map(mio_locations, other_locations, output_file="map.html"):
+def create_folium_map(mio_locations, other_locations ,output_file="map.html"):
     """
     Create an interactive map using Folium.
     """
@@ -487,9 +488,9 @@ def index():
     """
     Home page showing the interactive map.
     """
-    mio_locations = fetch_locations_from_db()
+    mio_locations, other_locations = fetch_locations_from_db()
     #other locations =
-    create_folium_map(mio_locations)
+    create_folium_map(mio_locations, other_locations)
     return render_template_string("<iframe src='/map' width='100%' height='600px'></iframe>")
 
 
@@ -676,9 +677,6 @@ def export_filtered_data():
     if not filtered_data:
         return "No data to export", 400
     median_data = request.json.get("median_data", [])
-    
-    print(filtered_data)
-    print(median_data)
 
     # Convert the filtered data to a Pandas DataFrame
     filt_df = pd.DataFrame(filtered_data)
@@ -730,16 +728,11 @@ def split_monitor(name, customId):
     # Convert back to datetime if needed
     df['Timestamp'] = pd.to_datetime(df['Timestamp'])
     '''
-    #print(df)
-
     split_data_json = df.to_dict(orient='records')
-
-    #print(split_data_json)
 
     return render_template("SplitReport.html",
                            customId = json.dumps(customId,default=str),
                            split_data= json.dumps(split_data_json, default=str),
-                           #split_data = split_data,
                            name = json.dumps(name,default=str),
                            )
 
@@ -754,18 +747,8 @@ def getControllerData():
         # Get from the name
         custom_id = name.split(' ')[0]
 
-    '''
-    TODO 
-    1 - FIRST GET THE SCHEDULE FOR THE SELECTED DATE
-    2 - GET THE DAY PLAN FOR THE SCHEDULE
-    3 - GET THE TOD ACTIONS FOR THE DAY PLAN - PASS THE T.O.D. PLANS TO THE APP
-    4 - GET THE PROGRAM SLPITS FOR THE DAY PLAN # - PASS THESE TO APP
-    '''
-
     day_plan_num, conn = fetch_day_plan(selected_day, custom_id)
-    print(day_plan_num)
     action_plan = fetch_controller_actions(day_plan_num, conn, custom_id)
-    print(action_plan)
 
     action_plan_json = action_plan.to_dict(orient='records')
     return json.dumps(action_plan_json, default=str)

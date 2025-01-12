@@ -104,12 +104,41 @@
         enable: uniqueDates,
         utc: true,
         onChange: (selectedDates, dateStr) => {
+          updatePhaseDropdown(SplitData.slice(0,100)); //Pass the first 100 rows
           updateControllerData(dateStr, customId, name);
           
         }
     });
 
-    
+
+    function updatePhaseDropdown(splitData) {
+        const phaseDropdown = document.getElementById("phase-select");
+        const totalPhases = 8;
+
+        // Determine which phases have data
+        const phasesWithData = new Set();
+        splitData.forEach(entry => {
+            for (let i = 1; i <= totalPhases; i++) {
+                if (entry[`SP${i}_split`] !== null && entry[`SP${i}_split`] !== 0) {
+                    phasesWithData.add(i);
+                }
+            }
+        });
+
+        // Update the dropdown options
+        Array.from(phaseDropdown.options).forEach(option => {
+            const phase = parseInt(option.value, 10);
+            if (!phasesWithData.has(phase)) {
+                option.disabled = true; // Grey out the option
+                option.style.color = "grey";
+            } else {
+                option.disabled = false; // Enable the option
+                option.style.color = "black";
+            }
+        });
+    }
+
+
     // Retrieve the Controller Data from Flask
     function updateControllerData(selectedDate, customId, name) {
         // Create the payload to send to the server
@@ -144,28 +173,6 @@
             console.error('Error fetching controller data:', error);
         });
     }
-
-
-    // I THINK ALL THIS CAN BE DELETED
-    let selectedTimestamps = []; // Store selected timestamps
-    const Phase1_split = SplitData.map(entry => entry.SP1_split);
-    const Phase2_split = SplitData.map(entry => entry.SP2_split);
-    const Phase3_split = SplitData.map(entry => entry.SP3_split);
-    const Phase4_split = SplitData.map(entry => entry.SP4_split);
-    const Phase5_split = SplitData.map(entry => entry.SP5_split);
-    const Phase6_split = SplitData.map(entry => entry.SP6_split);
-    const Phase7_split = SplitData.map(entry => entry.SP7_split);
-    const Phase8_split = SplitData.map(entry => entry.SP8_split);
-
-    const Phase1_term = SplitData.map(entry => entry.SP1_term);
-    const Phase2_term = SplitData.map(entry => entry.SP2_term);
-    const Phase3_term = SplitData.map(entry => entry.SP3_term);
-    const Phase4_term = SplitData.map(entry => entry.SP4_term);
-    const Phase5_term = SplitData.map(entry => entry.SP5_term);
-    const Phase6_term = SplitData.map(entry => entry.SP6_term);
-    const Phase7_term = SplitData.map(entry => entry.SP7_term);
-    const Phase8_term = SplitData.map(entry => entry.SP8_term);
-
 
     // Button to reset zoom
     document.getElementById('resetZoom').onclick = () => splitChart.resetZoom();
