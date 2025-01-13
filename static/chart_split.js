@@ -163,7 +163,7 @@ function updateSplitChart() {
 
             // Calculate starting point
             let startX = chartArea.left + padding;
-            let startY = chartArea.top ;
+            let startY = chartArea.top - (padding * 10);
 
             // Draw each legend item
             legendItems.forEach(([key, color], index) => {
@@ -408,6 +408,11 @@ function updateSplitChart() {
             ],
         },
         options: {
+            layout: {
+                padding: {
+                    top: 100, // Add 50 pixels of space to the top
+                }
+            },
             responsive: true,
             plugins: {
                 legend: {
@@ -427,8 +432,15 @@ function updateSplitChart() {
                             const duration = dataPoint.y; // Phase duration
                             const termination = filteredData[context.dataIndex].termination;
                 
-                            // Format the tooltip text
-                            return `Timestamp: ${new Date(timestamp).toLocaleString()}\nDuration: ${duration}s\nTermination: ${termination}`;
+                            if (context.datasetIndex === 0){ // Split Data         
+                                // Format the tooltip text
+                                return `Timestamp: ${new Date(timestamp).toLocaleString()}\nDuration: ${duration}s\nTermination: ${termination}`;                            
+                            }
+                            if (context.datasetIndex === 1){ //Cycle Length
+                                return `Timestamp: ${new Date(timestamp).toLocaleString()}\nCycle Length: ${duration}s`;                            
+                            }
+                                return `Timestamp: ${new Date(timestamp).toLocaleString()}\nProgram Split: ${duration}s`;                            
+                            
                         },
                     },
                 },
@@ -494,7 +506,6 @@ function updateSplitChart() {
     });
 }
 
-// Move this to SplitReport.html
 // Add event listener for phase selector
 document.getElementById("phase-select").addEventListener("change", updateSplitChart);
 

@@ -37,6 +37,22 @@
             max-width: 100%;
             margin: 20px;
         }
+
+        /* Custom styles for specific date conditions */
+        .custom-red {
+            /*background-color: #FFCDD2 !important;  Light red */
+            color: #B71C1C ; /* Dark red text */
+        }
+
+        .custom-green {
+            /*background-color: #C8E6C9 !important;  Light green */
+            color: #1B5E20 ; /* Dark green text */
+        }
+
+        .custom-blue {
+            /*background-color: #BBDEFB !important;  Light blue */
+            color: #0D47A1 ; /* Dark blue text */
+        }
     </style>
 </head>
 <body>
@@ -91,18 +107,31 @@
 
 <script>
     
-
+    
     // Extract unique dates and times
     const timestamps = SplitData.map(entry => new Date(entry.Timestamp));
     const uniqueDates = [...new Set(timestamps.map(ts => ts.toISOString().split('T')[0]))];
 
     // Initialize Flatpickr for date inputs
     const startDateInput = document.getElementById('start-date');
-    
+
+    // TODO - Change the color of the date groups based on timing changes
+    function getColorForDate(date) {
+        if (date.getDay() === 0 || date.getDay() === 6) return "custom-blue"; // Weekends
+        if (date.getDate() === 1) return "custom-red"; // First of the month
+        return null; // Default (no color)
+    };
+
     flatpickr(startDateInput, {
         dateFormat: "Y-m-d",
         enable: uniqueDates,
         utc: true,
+        onDayCreate: (dObj, dStr, fp, dayElem) => {
+          const colorClass = getColorForDate(dayElem.dateObj);
+            if (colorClass) {
+                dayElem.classList.add(colorClass);
+            }
+        },
         onChange: (selectedDates, dateStr) => {
           updatePhaseDropdown(SplitData.slice(0,100)); //Pass the first 100 rows
           updateControllerData(dateStr, customId, name);

@@ -149,35 +149,35 @@ let volumeBarChart = new Chart(ctxBar, {
                 propagate: true
             },
             tooltip: {
-            mode: 'index', // Display data from all datasets for the hovered bar
-            //mode: 'nearest',
-            intersect: false, // Ensure the tooltip shows when hovering over the bar area
-            callbacks: {
-                label: function(tooltipItem) {
-                    //const datasetLabel = tooltipItem.dataset.label || '';
-                    //const value = tooltipItem.raw || 0;
-                    //return `${datasetLabel}: ${value}`;
-                    const dataset = tooltipItem.chart.data.datasets[tooltipItem.datasetIndex];
-                    const dataPoint = dataset.data[tooltipItem.dataIndex];
+                mode: 'index', // Display data from all datasets for the hovered bar
+                //mode: 'nearest',
+                intersect: false, // Ensure the tooltip shows when hovering over the bar area
+                callbacks: {
+                    label: function(tooltipItem) {
+                        //const datasetLabel = tooltipItem.dataset.label || '';
+                        //const value = tooltipItem.raw || 0;
+                        //return `${datasetLabel}: ${value}`;
+                        const dataset = tooltipItem.chart.data.datasets[tooltipItem.datasetIndex];
+                        const dataPoint = dataset.data[tooltipItem.dataIndex];
 
-                    // Extract value
-                    const value = typeof dataPoint === 'object' ? dataPoint.y : dataPoint; //if object get the y point
+                        // Extract value
+                        const value = typeof dataPoint === 'object' ? dataPoint.y : dataPoint; //if object get the y point
 
-                    // Format temperature separately
-                    if (dataset.label.includes('Temperature')) {
-                        return `${dataset.label}: ${value.toFixed(1)} °F`;
+                        // Format temperature separately
+                        if (dataset.label.includes('Temperature')) {
+                            return `${dataset.label}: ${value.toFixed(1)} °F`;
+                        }
+                        else if (dataset.label.includes('Rain')) {
+                            return `${dataset.label}: ${value.toFixed(2)} mm`;
+                        }
+                        else if (dataset.label.includes('Snow')) {
+                            return `${dataset.label}: ${value.toFixed(3)} mm`;
+                        }
+                        // Default formatting for other datasets
+                        return `${dataset.label}: ${value}`;
+                        }
                     }
-                    else if (dataset.label.includes('Rain')) {
-                        return `${dataset.label}: ${value.toFixed(2)} mm`;
-                    }
-                    else if (dataset.label.includes('Snow')) {
-                        return `${dataset.label}: ${value.toFixed(3)} mm`;
-                    }
-                    // Default formatting for other datasets
-                    return `${dataset.label}: ${value}`;
-                    }
-                }
-            },
+                },
             title: {
                 display: true,
                 text: 'Total Vehicle Volume Over Time'
@@ -244,6 +244,8 @@ let volumeBarChart = new Chart(ctxBar, {
                 }
             }
         },
+
+        /*
         onClick: (event, elements) => {
             if (elements.length > 0) {
                 const index = elements[0].index;
@@ -263,5 +265,174 @@ let volumeBarChart = new Chart(ctxBar, {
                 console.log("Selected Timestamps:", selectedTimestamps);
                 }
             }
+
+
+        */
         }
+});
+
+
+
+
+
+
+let isDragging = false;
+let startX, startY, endX, endY;
+
+// Canvas events
+const canvas = volumeBarChart.canvas;
+const overlayCanvas = document.getElementById('overlayCanvas');
+
+overlayCanvas.width = canvas.width;
+overlayCanvas.height = canvas.height;
+
+const overlayCtx = overlayCanvas.getContext('2d');
+
+overlayCanvas.addEventListener('mousedown', (event) => {
+    // Bring Overlay to top
+    overlayCanvas.style.zIndex = 2;
+    canvas.style.zIndex = 1; 
+
+    const rect = overlayCanvas.getBoundingClientRect();
+    startX = event.clientX - rect.left;
+    startY = event.clientY - rect.top;
+    isDragging = true;
+    // Disable tooltips
+    volumeBarChart.options.plugins.tooltip.enabled = false;
+
+    volumeBarChart.update();
+});
+
+canvas.addEventListener('mousedown', (event) => {
+    // Bring Overlay to top
+    overlayCanvas.style.zIndex = 2;
+    canvas.style.zIndex = 1; 
+
+    const rect = overlayCanvas.getBoundingClientRect();
+    startX = event.clientX - rect.left;
+    startY = event.clientY - rect.top;
+    isDragging = true;
+    // Disable tooltips
+    volumeBarChart.options.plugins.tooltip.enabled = false;
+    
+    volumeBarChart.update();
+});
+
+/*
+canvas.addEventListener('mousemove', (event) => {
+    if (!isDragging) return;
+
+    // Get mouse position relative to the canvas
+    const rect = canvas.getBoundingClientRect();
+    endX = event.clientX - rect.left;
+    endY = event.clientY - rect.top;
+
+    // Clear any previous selection box
+    const ctx = volumeBarChart.ctx;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Redraw the chart
+    volumeBarChart.draw();
+
+    // Draw the selection box
+    ctx.save();
+    ctx.fillStyle = 'rgba(0, 0, 255, 0.2)';
+    ctx.strokeStyle = 'blue';
+    ctx.lineWidth = 1;
+    ctx.fillRect(startX, startY, endX - startX, endY - startY);
+    ctx.strokeRect(startX, startY, endX - startX, endY - startY);
+    ctx.restore();
+});
+*/
+    
+
+// Use overlayCanvas for the selection box
+overlayCanvas.addEventListener('mousemove', (event) => {
+    if (!isDragging) return;
+
+    const rect = overlayCanvas.getBoundingClientRect();
+    endX = event.clientX - rect.left;
+    endY = event.clientY - rect.top;
+
+    // Clear previous rectangle
+    overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+
+    volumeBarChart.draw();
+
+    // Draw new rectangle
+    overlayCtx.save();
+    overlayCtx.fillStyle = 'rgba(0, 0, 255, 0.2)';
+    overlayCtx.strokeStyle = 'blue';
+    overlayCtx.lineWidth = 2;
+    overlayCtx.fillRect(startX, startY, endX - startX, endY - startY);
+    overlayCtx.strokeRect(startX, startY, endX - startX, endY - startY);
+    overlayCtx.restore();
+});
+
+
+
+overlayCanvas.addEventListener('mouseup', (event) => {
+    if (!isDragging) return;
+    isDragging = false;
+
+    const rect = overlayCanvas.getBoundingClientRect();
+    endX = event.clientX - rect.left;
+    endY = event.clientY - rect.top;
+
+    // Clear previous rectangle
+    overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+
+    // Re-enable tooltips
+    volumeBarChart.options.plugins.tooltip.enabled = true;
+    volumeBarChart.update();
+    // Bring Chart to top
+    overlayCanvas.style.zIndex = 1;
+    canvas.style.zIndex = 2; 
+
+    // Normalize drag box coordinates
+    const minX = Math.min(startX, endX);
+    const maxX = Math.max(startX, endX);
+    const minY = Math.min(startY, endY);
+    const maxY = Math.max(startY, endY);
+
+    // Manually find elements within the drag box
+    const elements = [];
+    volumeBarChart.data.datasets[0].data.forEach((_, index) => {
+        const meta = volumeBarChart.getDatasetMeta(0);
+        const bar = meta.data[index];
+
+        // Check if bar is within the drag area
+        if (
+            bar.x >= minX && bar.x <= maxX && // Check horizontal overlap
+            bar.y >= minY && bar.y <= maxY    // Check vertical overlap
+        ) {
+            elements.push({
+                label: volumeBarChart.data.labels[index],
+                value: volumeBarChart.data.datasets[0].data[index]
+            });
+        }
+    });
+
+    // Append newly selected timestamps
+    elements.forEach((el) => {
+        if (!selectedTimestamps.includes(el.label)) {
+            selectedTimestamps.push(el.label); // Avoid duplicates
+        }
+    });
+
+    /*
+    // Optionally, highlight selected bars
+    volumeBarChart.data.datasets[0].backgroundColor = volumeBarChart.data.datasets[0].data.map((value, index) => {
+        return elements.some(el => el.label === volumeBarChart.data.labels[index]) ? 'rgba(72, 235, 31, 0.6)' : 'rgba(54, 162, 235, 0.6)';
+    });
+    */
+    // Highlight all selected bars
+    volumeBarChart.data.datasets[0].backgroundColor = volumeBarChart.data.datasets[0].data.map((value, index) => {
+        return selectedTimestamps.includes(volumeBarChart.data.labels[index])
+            ? 'rgba(72, 235, 31, 0.6)' // Highlight color
+            : 'rgba(54, 162, 235, 0.6)'; // Default color
+    });
+
+
+    volumeBarChart.update();
 });

@@ -122,9 +122,14 @@
     <button id="calculate-mean" class="btn">Add Mean to Chart</button>
 </div>
 
-<!-- Chart container -->
+<!-- Chart container 
 <div id="charts-container">
     <canvas id="volumeBarChart"></canvas>
+</div>
+-->
+<div id="charts-container" style="position: relative;">
+    <canvas id="volumeBarChart" style="z-index: 2;"></canvas>
+    <canvas id="overlayCanvas" style="position: absolute; top: 0; left: 0; z-index: 1;"></canvas>
 </div>
 
 <!-- Button container -->
