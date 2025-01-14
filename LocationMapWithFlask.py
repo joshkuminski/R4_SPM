@@ -14,6 +14,9 @@ from meteostat import Daily, Point, Hourly
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.cluster import KMeans
 import io
+import string
+from sqlalchemy import create_engine
+
 
 app = Flask(__name__)
 
@@ -266,7 +269,7 @@ def fetch_controller_actions(day_plan, conn, customId):
     cursor = conn.cursor()
     table_1 = f"Day_Plan_Table_{customId.replace('-', '_')}"
     table_2 = f"Controller_Table_{customId.replace('-', '_')}"
-    print(day_plan)
+
     # Query the SQL database to find the Day_Plan
     query = f"""
                 SELECT *
@@ -279,7 +282,7 @@ def fetch_controller_actions(day_plan, conn, customId):
     #print(query)
     cursor.execute(query)
     data = cursor.fetchall()
-    print(data)
+
     column_names = ["Day_Plan", "Hour", "Min", "Action", "Pattern", "Cycle", "Offset", "Split_Num", "Sequence",
                     "Coord_Phase",
                     "SP1", "SP2", "SP3", "SP4", "SP5", "SP6", "SP7", "SP8", "Phase_Mode"]
@@ -312,6 +315,9 @@ def create_folium_map(mio_locations, other_locations ,output_file="map.html"):
         #popup_html = f"<b>{location['name']}</b><br>ID: {location['id']}<br><a href='{details_url}' target='_blank'>View TMC Data</a>"
         popup_html = (
             f"<b>{location['name']}</b><br>ID: {location['id']}<br>"
+            f"""<br><button onclick="toggleSelection({location['latitude']}, {location['longitude']}, '{location['name']}')">
+            Select
+            </button><br>"""
             f"<a href=\"javascript:void(0)\" onclick=\"window.open(passTimeRangeToMarker('{details_url}'), '_blank')\">View TMC Data</a><br>"
             f"<br><a href='{split_url}' target='_blank'>View Split Monitor</a>"
         )
@@ -327,13 +333,16 @@ def create_folium_map(mio_locations, other_locations ,output_file="map.html"):
         split_url_nonMio = f"http://127.0.0.1:5000/split_monitor/{loc['name']}/{loc['name']}"
         popup_html_nonMio = (
             f"<b>{loc['name']}</b><br>Main Route: {loc['main_route']}<br>Intersect Route: {loc['intersect_route']}"
+            f"""<br><button onclick="toggleSelection({loc['latitude']}, {loc['longitude']}, '{loc['name']}')">
+            Select
+            </button><br>"""
             f"<br><a href='{split_url_nonMio}' target='_blank'>View Split Monitor</a>"
         )
         # popup_html = f"<b>{loc['id']}</b><br>Main Route: {loc['main_route']}<br>Intersect Route: {loc['int_route']}"
         folium.Marker(
             [loc["latitude"], loc["longitude"]],
             popup=popup_html_nonMio,
-            tooltip=f"No Miovision",
+            tooltip=loc["name"],
             # icon=folium.Icon(color="red", icon="info-sign", icon_size=(5, 5))
             icon=folium.Icon(color="red")
         ).add_to(m)
@@ -362,7 +371,17 @@ def create_folium_map(mio_locations, other_locations ,output_file="map.html"):
                 
                 <button id="apply-date-range">Apply</button>
             </div>
+
+            <div id="add-corridor-container" style="position: absolute; top: 10px; right: 10px; z-index: 1000;">
+                <button onclick="saveCorridor()" style="background-color: #007BFF; color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer;">
+                    Add Corridor
+                </button>
+                <select id="corridor-dropdown" style="margin-top: 10px; width: 100%; padding: 5px;">
+                    <option disabled selected>Loading corridors...</option>
+                </select>
+            </div>
        """)
+
     m.get_root().html.add_child(custom_html)
     m.get_root().header.add_child(CssLink('./static/folium_css.css'))
     m.add_css_link("flatpicker_css","https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css")
@@ -500,6 +519,41 @@ def map_page():
     Serve the generated map HTML.
     """
     return open("map.html").read()
+
+
+@app.route('/get_corridors', methods=['GET'])
+def get_corridors():
+    server = Mio_config['server']
+    database = Mio_config['database']
+
+    try:
+        # Connect to the database
+        conn = connect_to_db(server, database)
+        cursor = conn.cursor()
+
+        query = f"""
+        SELECT *
+        FROM Corridor_Table
+        """
+        cursor.execute(query)
+
+        corridors = [{"corridorId": row[0], "corridorName": row[1], "latitude": row[2], "longitude": row[3], "intersectionId": row[4]} for row in cursor.fetchall()]
+        # Extract unique corridorId and corridorName
+        unique_corridors = {}
+        for corridor in corridors:
+            unique_corridors[corridor["corridorId"]] = corridor["corridorName"]
+
+        # Convert to a list of dictionaries to send to the web app
+        unique_corridors_list = [{"corridorId": key, "corridorName": value} for key, value in unique_corridors.items()]
+
+        conn.close()
+
+        return json.dumps(unique_corridors_list, default=str)
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return json.dumps({"error": str(e)}, default=str)
+
 
 
 @app.route("/intersection/<name>/<intersection_id>")
@@ -752,6 +806,78 @@ def getControllerData():
 
     action_plan_json = action_plan.to_dict(orient='records')
     return json.dumps(action_plan_json, default=str)
+
+
+@app.route('/add_corridor', methods=['POST'])
+def add_corridor():
+    '''Need the list of intersections, how many corridors are already created and ?'''
+
+    try:
+        data = request.json  # Retrieve data from the request
+        locations = data['locations']
+        corridors = 3 # This will be from the App
+        corridorName = 'BHTL @ Clay to 15A' # This will be from the App
+
+        # CLean up
+        for loc in locations:
+            loc['corridorId'] = corridors
+            loc['corridorName'] = corridorName
+            loc['name'] = loc['name'].split(' ')[0]
+            if loc['name'][-1] in string.ascii_letters:
+                loc['name'] = loc['name'][:-1]
+
+        df = pd.DataFrame(locations)
+        # Reorder columns to move 'CorridorId' to the first position
+        df = df[['corridorName'] + [col for col in df.columns if col != 'corridorName']]
+        df = df[['corridorId'] + [col for col in df.columns if col != 'corridorId']]
+        # Rename a column
+        df = df.rename(columns={'lat': 'latitude'})
+        df = df.rename(columns={'lng': 'longitude'})
+        df = df.rename(columns={'name': 'intersectionId'})
+
+        """
+        We want to input the Corridor information into the Corridor_Table
+        Cloumns = CorridorId, CorridorName, intersectionId (must Match the suffix of all intersection tables),
+        latitude, longitude
+        Example: (1 , 'Jefferson Rd', '04-43-126', '43.06853131', '-77.43215332')
+
+        """
+        server = Mio_config['server']
+        database = Mio_config['database']
+
+        # Connection string
+        connection_string = f"mssql+pyodbc://@{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server&Trusted_Connection=yes"
+
+        # Create a SQLAlchemy engine
+        engine = create_engine(connection_string)
+        table_name = 'Corridor_Table'
+        
+        try:
+            # Append the DataFrame to the SQL table
+            #TODO - uncomment net line
+            #df.to_sql(name=table_name, con=engine, if_exists="append", index=False)
+        
+            print(f"Data successfully inserted into {table_name}")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+
+
+        return json.dumps({"message": "Corridor saved successfully."}, default=str)
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return json.dumps({"error": str(e)}, default=str)
+
+
+
+
+
+
+@app.route("/TT_chart")
+def TT_chart():
+
+    return render_template("TTpage.html",
+                           )
 
 
 if __name__ == "__main__":
