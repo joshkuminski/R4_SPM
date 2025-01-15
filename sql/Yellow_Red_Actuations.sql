@@ -4,7 +4,7 @@
 --EC = 9 Phase End Yellow
 --EC = 11 Phase End Red
 -- Variables to pass:
--- @Buffer = Xs buffer - actuations during green interval
+-- @Buffer = Xs buffer
 -- @StartTime, @ EndTime, @SelectedDate, @Phase, @Detector_Config_Table, @HiRes_Table
 
 
@@ -14,7 +14,7 @@ WITH VIEW1 AS (
     SELECT
         *,
         CASE
-            WHEN EC = 8 AND Param = @Phase THEN time
+            WHEN eventCode = 8 AND eventParam = @Phase THEN time
             ELSE NULL
         END AS EndOfGreen
     FROM @HiRes_Table
@@ -22,7 +22,7 @@ WITH VIEW1 AS (
 VIEW2 AS (
     SELECT
         *,
-        MAX(EndOfGreen) OVER (ORDER BY time ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS Filled_EndOfGreen
+        MAX(EndOfGreen) OVER (ORDER BY timestamp ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS Filled_EndOfGreen
     FROM VIEW1
 ),
 VIEW3 AS (
@@ -39,17 +39,17 @@ VIEW3 AS (
         END AS Clearance_Actuations
     FROM VIEW2
 )
-SELECT * --date, time, Clearance_Actuations
+SELECT *
 FROM VIEW3
 	JOIN
 		--JOIN THE HIRES TABLE WITH THE DETECTOR TABLE. ROWS FROM HIRES WHERE PARAM = DETECTOR FROM DETECTOR
 		-- TABLE.
-		@Detector_Config_Table as config ON VIEW3.Param = config.Detector
+		@Detector_Config_Table as config ON VIEW3.eventParam = config.Detector
 	WHERE
-		VIEW3.EC IN (82, 8)--Just the detector 'ON' enums.
-		AND VIEW3.date = @SelectedDate
-        AND config.[Function] = 'count' -- just the count zones
+		VIEW3.eventCode IN (82)--Just the detector 'ON' enums.
+        AND CONVERT(DATE, timestamp) = @SelectedDate
+        AND config.[Function] = 'point' -- just the advance zones
         AND config.Detector IN (52, 53) --Filter out the Right Turn Detectors
 		---AND CAST(VIEW3.time as TIME) BETWEEN @StartTime AND @EndTime --If we want to filter by TOD
-		AND config.Param = @Phase
-ORDER BY time DESC;
+		AND config.eventParam = @Phase
+ORDER BY timestamp;
