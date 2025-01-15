@@ -520,7 +520,15 @@ updateSplitChart();
 // Function to process data for the Phase Termination Chart
 function processPhaseTerminationData(splitData, phases, selectedDate) {
     const terminationData = [];
-
+    // Map termination types to colors
+    const termColors = {
+        F: "rgba(255, 99, 132, 1)", // Red
+        G: "rgba(54, 162, 235, 1)", // Blue
+        M: "rgba(75, 192, 192, 1)", // Green
+        None: "rgba(153, 102, 255, 1)", // Purple
+        null: "rgba(153, 102, 255, 1)", // Purple
+        Skip: "rgb(0, 0, 0)", // Black
+    };
     // Filter data for the selected date
     //const filteredData = splitData.filter((entry) => {
     //    const entryDate = new Date(entry.Timestamp).toISOString().split("T")[0]; // Extract the date part
@@ -539,24 +547,26 @@ function processPhaseTerminationData(splitData, phases, selectedDate) {
         return entryDate >= startDateTime && entryDate <= endDateTime;
     });
 
-
     phases.forEach((phase) => {
         const phaseData = filteredData
             .filter((entry) => entry[`SP${phase}_split`] !== null)
             .map((entry) => ({
                 x: entry.Timestamp, // Timestamp
                 y: phase, // Phase number
-                termination: entry[`SP${phase}_term`] || "None", // Termination type
+                //termination: entry[`SP${phase}_term`] || "None",
+                termination: parseFloat(entry[`SP${phase}_split`]) === 0 ? "Skip" : entry[`SP${phase}_term`],
+                //termination: entry[`SP${phase}_term`] || "None", // Termination type
             }));
 
+        console.log(phaseData);
         terminationData.push({
             label: ``,
             data: phaseData.map((point) => ({ x: point.x, y: point.y })),
-            backgroundColor: phaseData.map((point) => terminationColors[point.termination]),
+            backgroundColor: phaseData.map((point) => termColors[point.termination]),
             pointRadius: 5, // Marker size
         });
     });
-
+    console.log(terminationData);
     return terminationData;
 }
 
@@ -682,6 +692,7 @@ function renderPhaseTerminationChart() {
                         callbacks: {
                             label: function (context) {
                                 const dataPoint = context.raw;
+                                //TODO - need to fix the Skips they say None currently
                                 const termination = SplitData.find((d) => d.Timestamp === dataPoint.x)?.[`SP${dataPoint.y}_term`] || "None";
                                 return `Timestamp: ${new Date(dataPoint.x).toLocaleString()}, Termination: ${termination}`;
                             },
