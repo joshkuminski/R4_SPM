@@ -410,7 +410,8 @@ function updateSplitChart() {
         options: {
             layout: {
                 padding: {
-                    top: 100, // Add 50 pixels of space to the top
+                    top: 100,
+                    right: 50, // Add 50 pixels of space to the top
                 }
             },
             responsive: true,
@@ -457,7 +458,7 @@ function updateSplitChart() {
                             enabled: true, // Enable zooming with pinch gestures
                         },
                         drag: {
-                            enabled: true, // Enable zooming by dragging a rectangle
+                            enabled: false, // Enable zooming by dragging a rectangle
                         },
                         mode: 'x', // Allow zooming in both x and y axes
                     },
@@ -506,8 +507,232 @@ function updateSplitChart() {
     });
 }
 
-// Add event listener for phase selector
-document.getElementById("phase-select").addEventListener("change", updateSplitChart);
-
 // Initial chart rendering
 updateSplitChart();
+
+
+
+
+
+
+// PHASE TERMINATION CHART
+
+// Function to process data for the Phase Termination Chart
+function processPhaseTerminationData(splitData, phases, selectedDate) {
+    const terminationData = [];
+
+    // Filter data for the selected date
+    //const filteredData = splitData.filter((entry) => {
+    //    const entryDate = new Date(entry.Timestamp).toISOString().split("T")[0]; // Extract the date part
+    //    return entryDate === selectedDate;
+    //});
+    //console.log(phaseData);
+    startTime = '00:00:00';
+    endTime = '23:59:59';
+
+    const startDateTime = new Date(`${selectedDate}T${startTime}`);
+    const endDateTime = new Date(`${selectedDate}T${endTime}`);
+
+   // Filter the data for the selected date
+    const filteredData = splitData.filter(entry => {
+        const entryDate = new Date(entry.Timestamp); 
+        return entryDate >= startDateTime && entryDate <= endDateTime;
+    });
+
+
+    phases.forEach((phase) => {
+        const phaseData = filteredData
+            .filter((entry) => entry[`SP${phase}_split`] !== null)
+            .map((entry) => ({
+                x: entry.Timestamp, // Timestamp
+                y: phase, // Phase number
+                termination: entry[`SP${phase}_term`] || "None", // Termination type
+            }));
+
+        terminationData.push({
+            label: ``,
+            data: phaseData.map((point) => ({ x: point.x, y: point.y })),
+            backgroundColor: phaseData.map((point) => terminationColors[point.termination]),
+            pointRadius: 5, // Marker size
+        });
+    });
+
+    return terminationData;
+}
+
+
+let phaseTerminationChart = null; // Global variable to store the chart instance
+
+// Function to render the Phase Termination Chart
+function renderPhaseTerminationChart() {
+    const ctx = document.getElementById("phaseTerminationChart").getContext("2d");
+    const selectedDate = document.getElementById('start-date').value; // Format: 'YYYY-MM-DD'
+
+    // Define the phases
+    const phases = [1, 2, 3, 4, 5, 6, 7, 8];
+
+    // Process data for the chart
+    const terminationDatasets = processPhaseTerminationData(SplitData, phases, selectedDate);
+
+    const customBackgroundPlugin = {
+        id: 'backgroundPlugin',
+        beforeDraw: (phaseTerminationChart) => {
+            const { ctx, chartArea, scales } = phaseTerminationChart;
+            const xScale = scales.x;
+            let startTimes = [];
+            // Example color mapping for patterns
+            const patternColors = {
+                "Free": "rgba(128, 128, 128, 0.14)", // Grey
+                "1": "rgba(42, 100, 139, 0.14)",    // Blue
+                "2": "rgba(81, 184, 149, 0.14)",    // Green
+                "3": "rgba(163, 72, 72, 0.14)",     // Red
+                "4": "rgba(163, 157, 72, 0.14)",    // Yellow
+                "5": "rgba(104, 72, 163, 0.14)"    // Purple
+            };
+
+            // Default color for undefined patterns
+            const defaultColor = "rgba(200, 200, 200, 0.14)";
+            // Initialize an empty intervals array
+            const intervals = [];
+
+            // TODO - Make the start time and end ime from the action table
+            if (typeof hours !== "undefined" && Array.isArray(hours) && hours.length > 0) {
+                // Ensure min is defined and has the same length as hours
+                if (typeof min === "undefined" || min.length !== hours.length) {
+                    console.error("Mismatch between hours and min arrays.");
+                } else {
+                    startTimes = hours.map((hour, index) => {
+                        const minute = min[index].padStart(2, "0"); // Ensure minutes are two digits
+                        return hour.padStart(2, "0") + ":" + minute + ":00"; // Combine hour and minute
+                    });
+                }
+            } else {
+                // Fallback values if `hours` or `min` is not defined
+                const startTime = ['00:00:00', '06:00:00'];
+                const endTime = ['06:00:00', '24:00:00'];
+                //console.log("Fallback start and end times:", startTime, endTime);
+            }
+            
+            
+           
+            // Loop through the start and end time arrays
+            for (let i = 0; i < startTimes.length; i++) {
+                const Pattern = pattern[i] || "Default"; // Get the pattern for this interval
+                const color = patternColors[Pattern] || defaultColor; // Get the corresponding color
+
+                // Set the end time for the last interval to "24:00:00"
+                const endTime = i === startTimes.length - 1
+                    ? "24:00:00"
+                    : startTimes[i + 1];
+
+                // Create a new interval object with start and end times
+                intervals.push({
+                    start: new Date(`${selectedDate}T${startTimes[i]}`),
+                    end: new Date(`${selectedDate}T${endTime}`),
+                    color: color,
+                });
+            }
+
+            // Draw background colors for each interval
+            intervals.forEach(({ start, end, color }) => {
+                const startX = xScale.getPixelForValue(new Date(start));
+                const endX = xScale.getPixelForValue(new Date(end));
+
+                ctx.save();
+                ctx.fillStyle = color;
+                ctx.fillRect(startX, chartArea.top, endX - startX, chartArea.bottom - chartArea.top);
+                ctx.restore();
+            });
+
+
+        },
+    };
+
+
+    // Destroy the existing chart instance if it exists
+    if (phaseTerminationChart) {
+        phaseTerminationChart.destroy();
+    }
+
+    // Create the chart
+    phaseTerminationChart = new Chart(ctx, {
+            type: "scatter",
+            data: {
+                datasets: terminationDatasets,
+            },
+            options: {
+                layout: {
+                    padding: {
+                        top: 20,
+                        right: 80, 
+                        left: -30,
+                    }
+                },
+                responsive: true,
+                plugins: {
+                    legend: {
+                        labels: {
+                            filter: (legendItem) => {
+                                // Exclude datasets with empty labels
+                                return legendItem.text && legendItem.text.trim() !== '';
+                            },
+                        },
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                const dataPoint = context.raw;
+                                const termination = SplitData.find((d) => d.Timestamp === dataPoint.x)?.[`SP${dataPoint.y}_term`] || "None";
+                                return `Timestamp: ${new Date(dataPoint.x).toLocaleString()}, Termination: ${termination}`;
+                            },
+                        },
+                    },
+                    zoom: {
+                        pan: {
+                            enabled: true,
+                            mode: 'x', // Allow panning in the x-axis direction
+                        },
+                        zoom: {
+                            wheel: {
+                                enabled: true, // Enable zooming with the mouse wheel
+                            },
+                            pinch: {
+                                enabled: false, // Enable zooming with pinch gestures
+                            },
+                            drag: {
+                                enabled: false, // Enable zooming by dragging a rectangle
+                            },
+                            mode: 'x', // Allow zooming in x axis only
+                        },
+                    },
+                },
+                scales: {
+                    x: {
+                        type: "time",
+                        title: {
+                            display: true,
+                            text: "Time",
+                        },
+                    },
+                    y: {
+                        type: "linear",
+                        ticks: {
+                            callback: function (value) {
+                                return `Phase ${value}`; // Customize y-axis tick labels
+                            },
+                            maxRotation: 45, // Rotate the text at a 45-degree angle
+                            minRotation: 45, // Ensure consistent rotation
+                        },
+                        title: {
+                            display: true,
+                            text: "Phases",
+                        },
+                    },
+                },
+            },
+            plugins: [customBackgroundPlugin],
+    });
+}
+
+// Initial rendering
+renderPhaseTerminationChart();
