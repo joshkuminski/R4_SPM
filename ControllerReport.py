@@ -5,15 +5,17 @@ from sqlalchemy import create_engine
 
 
 def import_csv(file):
-    if file.split('_')[2] == 'AS.csv':
+
+    if file.split('_')[1] == 'AS.csv':
         df = import_schedule(file)
         return df
-    elif file.split('_')[2] == 'DP.csv':
+    elif file.split('_')[1] == 'DP.csv':
         df = import_day_plan(file)
         return df
     else:
         df = import_standard(file)
         return df
+
 
 
 def import_schedule(file):
@@ -94,7 +96,7 @@ def import_schedule(file):
     combined_table['Month'] = combined_table['Month'].apply(lambda x: ','.join(map(str, x)))
     combined_table['Day'] = combined_table['Day'].apply(lambda x: ','.join(map(str, x)))
     # Display the result
-    return combined_table
+    return combined_table, None
 
 
 def import_day_plan(file):
@@ -141,7 +143,7 @@ def import_day_plan(file):
     # Rename columns
     combined_table.columns = ["Day_Plan", "Hour", "Min", "Action"]
 
-    return combined_table
+    return combined_table, None
 
 
 def import_standard(file):
@@ -174,8 +176,15 @@ def import_standard(file):
     result = result.reset_index(drop=True)
 
     free_result = extract_range(df, free_range)
+    free_report = free_result.transpose()
+
+    free_columns = ["Phase", "MinGreen", "Gap", "Max1", "Max2", "Yel", "Red", "Walk", "Ped"]
+    free_report = free_report.iloc[:, :-10]
+    free_report.columns = free_columns  # Rename columns
+
     columns = ["SP1", "SP2", "SP3", "SP4", "SP5", "SP6", "SP7", "SP8"]
     free_result.columns = columns  # Rename columns
+
 
     # Ensure numeric columns are converted to numbers
     for col in free_result.columns:  # Skip the "ID" column
@@ -219,7 +228,7 @@ def import_standard(file):
 
     combined_table = combined_table[["Pattern", "Cycle", "Offset", "Split_Num", "Sequence","Coord_Phase","SP1", "SP2", "SP3", "SP4", "SP5", "SP6", "SP7", "SP8", "Phase_Mode"]]
 
-    return combined_table
+    return combined_table, free_report
 
 
 def connect_to_db(server, database):
@@ -255,10 +264,10 @@ def create_table(conn, intersection_id):
         IF NOT EXISTS (
             SELECT 1
             FROM sys.tables
-            WHERE name = 'Controller_Table_{intersection_id}'
+            WHERE name = '{intersection_id}'
         )
         BEGIN
-            CREATE TABLE Controller_Table_{intersection_id} (
+            CREATE TABLE {intersection_id} (
                 Pattern INT,
                 Cycle INT,
                 Split_Num INT,
@@ -307,17 +316,26 @@ if __name__ == "__main__":
     for file in path:
         pass
 
-    intersection_id = "Day_Plan_Table_04_43_494"
+    intersection_id = "Schedule_Table_04_43_285"
+    #intersection_id = "Controller_Table_04_43_493"
+    #intersection_id = "Day_Plan_Table_04_43_327"
+    free_table = "Free_Table_04_43_285"
     '''
     # Create New Table
     conn = connect_to_db(server, database)
 
     create_table(conn, intersection_id)
     '''
-    file_path = "./ControllerReport/34940_Standard_DP.csv"
-    df = import_csv(file_path)
-    print(df)
+    file_path = "./Database_Folders/ControllerTables/04-43-285/32850_Standard.csv"
+    df, df_fr = import_csv(file_path)
+    #load_to_db(df, server, database, intersection_id)
+
+    if df_fr is not None:
+        load_to_db(df_fr, server, database, free_table)
+
     '''
+    print(df)
+  
     Sequence_Key = {
         "Seq_Num": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
         "Phase_Seq": ["1,2,3,4,5,6,7,8", "1,2,3,4,6,5,7,8", "2,1,3,4,5,6,7,8", "2,1,3,4,6,5,7,8",
@@ -327,5 +345,6 @@ if __name__ == "__main__":
     }
     df = pd.DataFrame(Sequence_Key)
     print(df)
+  
+    
     '''
-    load_to_db(df, server, database, intersection_id)
