@@ -113,6 +113,7 @@
   let hours = null;
   let min = null;
   let pattern = null;
+  let MinGreen = null;
 </script>
 
 <script src="{{ url_for('static', filename='chart_split.js') }}"></script>
@@ -207,10 +208,12 @@
         })
         .then(data => {
             //console.log("Controller Data:", data);
-            controller_data = data;
+            controller_data = data.action_plan_json;
             hours = controller_data.map(entry => entry.Hour);
             min = controller_data.map(entry => entry.Min);
             pattern = controller_data.map(entry => entry.Pattern);
+            MinGreen = data.MinGreen;
+
             updateSplitChart(); 
             
         })

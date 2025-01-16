@@ -1,4 +1,4 @@
-from flask import Flask, render_template_string, request, render_template, send_file
+from flask import Flask, render_template_string, request, render_template, send_file, Response
 import json
 import folium
 from folium import CssLink, JavascriptLink
@@ -201,7 +201,7 @@ def fetch_split_data(name, customId=None):
     table_name = f"Split_Table_{customId.replace('-', '_')}"  # Sanitize table name
     int_var_dict = {'split_table': table_name
                     }
-    print(table_name)
+
     with open(pythonsql, 'r') as f:
         query = f.read()
     for placeholder, value in int_var_dict.items():  # Replaces variables in SQL with variables/values above
@@ -293,6 +293,42 @@ def fetch_controller_actions(day_plan, conn, customId):
     df = pd.DataFrame(tod_table)  # convert to dataframe
 
     return df
+
+
+def fetch_free_table(conn, customId):
+    cursor = conn.cursor()
+    table = f"Free_Table_{customId.replace('-', '_')}"
+
+    # Query the SQL database to find the Day_Plan
+    query = f"""
+                SELECT *
+                FROM {table}       
+                """
+    try:
+        cursor.execute(query)
+        data = cursor.fetchall()
+    except:
+        return []
+
+    column_names = ["Phase", "MinGreen", "Gap", "Max1", "Max2", "Yel", "Red", "Walk", "Ped"]
+
+    # Convert tuples to dictionaries - using column name
+    free_table = [dict(zip(column_names, row)) for row in data]
+
+    df = pd.DataFrame(free_table)  # convert to dataframe
+    # Need to get the min split from min green + y + r
+    # Ensure numeric columns are converted to numbers
+    for col in df.columns:  # Skip the "ID" column
+        df[col] = pd.to_numeric(df[col], errors="coerce")
+        
+    cols_to_add = [1, 5, 6]  # Indexes of the cols
+    df["MinSplit"] = df.iloc[:, cols_to_add].sum(axis=1)  # Use axis=1 to sum rows
+
+    MinGreen = df["MinSplit"]
+    print(MinGreen)
+
+    return df, MinGreen
+
 
 
 def create_folium_map(mio_locations, other_locations ,output_file="map.html"):
@@ -537,7 +573,8 @@ def get_corridors():
         """
         cursor.execute(query)
 
-        corridors = [{"corridorId": row[0], "corridorName": row[1], "latitude": row[2], "longitude": row[3], "intersectionId": row[4]} for row in cursor.fetchall()]
+        corridors = [{"corridorId": row[0], "corridorName": row[1], "latitude": row[2], "longitude": row[3],
+        "intersectionId": row[4]} for row in cursor.fetchall()]
         # Extract unique corridorId and corridorName
         unique_corridors = {}
         for corridor in corridors:
@@ -803,9 +840,22 @@ def getControllerData():
 
     day_plan_num, conn = fetch_day_plan(selected_day, custom_id)
     action_plan = fetch_controller_actions(day_plan_num, conn, custom_id)
+    
+    free_table, MinGreen = fetch_free_table(conn, custom_id)
 
     action_plan_json = action_plan.to_dict(orient='records')
-    return json.dumps(action_plan_json, default=str)
+    MinGreen_json = MinGreen.to_dict()
+
+    print(action_plan, free_table)
+    # Create a JSON response using json.dumps
+    response_data = {
+        "action_plan_json": action_plan_json,
+        "MinGreen": MinGreen_json
+    }
+    response_json = json.dumps(response_data)
+
+    return Response(response_json, content_type='application/json')  # Set content type explicitly
+
 
 
 @app.route('/add_corridor', methods=['POST'])

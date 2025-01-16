@@ -97,6 +97,42 @@ function createIntervalLines(phase, date, controllerData) {
 }
 
 
+
+// Function to create phase programmed split times
+function createMinGreenLines(phase, date, minGreen_data) {
+    // Fallback values if `hours` or `min` is not defined
+    const startTime = '00:00:00';
+    const endTime = '24:00:00';
+
+    start = new Date(`${date}T${startTime}`),
+    end = new Date(`${date}T${endTime}`)
+
+    const datasets = [];
+
+    const phaseIndex = phase - 1; // Convert Selected Phase to index
+    
+    if (minGreen_data !== null) {
+        const value = parseFloat(minGreen_data[phaseIndex]); // Get the value for the phase
+
+        datasets.push({
+            label: 'Min Split',
+            data: [
+                { x: start, y: value },
+                { x: end, y: value }
+            ],
+            borderColor: 'rgba(55, 100, 12, 0.6)', // Line color
+            borderWidth: 2,
+            pointRadius: 0, // No data points
+            fill: false, // No fill under the line
+            type: 'line', // Line type dataset
+            yAxisID: "y",
+        });
+    }
+    return datasets;
+}
+
+
+
 // Function to update the chart
 function updateSplitChart() {
     const selectedPhase = document.getElementById("phase-select").value;
@@ -107,6 +143,9 @@ function updateSplitChart() {
 
     // Create datasets for intervals
     const intervalDatasets = createIntervalLines(selectedPhase, selectedDate, controller_data);
+
+    // Create datasets for intervals
+    const MinGreenDataset = createMinGreenLines(selectedPhase, selectedDate, MinGreen);
 
     //console.log(phaseData);
     startTime = '00:00:00';
@@ -404,6 +443,7 @@ function updateSplitChart() {
                     type: 'line', // Line type dataset
                 },
                 ...intervalDatasets,
+                ...MinGreenDataset,
 
             ],
         },
@@ -558,7 +598,7 @@ function processPhaseTerminationData(splitData, phases, selectedDate) {
                 //termination: entry[`SP${phase}_term`] || "None", // Termination type
             }));
 
-        console.log(phaseData);
+        
         terminationData.push({
             label: ``,
             data: phaseData.map((point) => ({ x: point.x, y: point.y })),
@@ -566,7 +606,7 @@ function processPhaseTerminationData(splitData, phases, selectedDate) {
             pointRadius: 5, // Marker size
         });
     });
-    console.log(terminationData);
+    
     return terminationData;
 }
 
