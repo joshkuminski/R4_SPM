@@ -88,6 +88,19 @@ async function saveCorridor() {
 }
 
 
+function TravelTimeReport() {{
+    const dropdown = document.getElementById('corridor-dropdown');
+    const selectedCorridor = dropdown.value;
+    console.log(selectedCorridor);
+    if (selectedCorridor) {{
+        // Redirect to the new page with the selected corridor ID
+        url = `/travel_time_report?corridorId=${selectedCorridor}`;
+        window.open(url, '_blank');
+        //window.location.href = `/travel_time_report?corridorId=${selectedCorridor}`;
+    }} else {{
+        alert('Please select a corridor before proceeding to the Travel Time Report.');
+    }}
+}}
 
 
 

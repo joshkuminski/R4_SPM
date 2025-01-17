@@ -16,6 +16,9 @@ from sklearn.cluster import KMeans
 import io
 import string
 from sqlalchemy import create_engine
+import math
+import numpy as np
+from haversine import haversine, Unit
 
 
 app = Flask(__name__)
@@ -330,7 +333,6 @@ def fetch_free_table(conn, customId):
     return df, MinGreen
 
 
-
 def create_folium_map(mio_locations, other_locations ,output_file="map.html"):
     """
     Create an interactive map using Folium.
@@ -411,6 +413,9 @@ def create_folium_map(mio_locations, other_locations ,output_file="map.html"):
             <div id="add-corridor-container" style="position: absolute; top: 10px; right: 10px; z-index: 1000;">
                 <button onclick="saveCorridor()" style="background-color: #007BFF; color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer;">
                     Add Corridor
+                </button>
+                <button id="travel-time-report" onclick="TravelTimeReport()" style="background-color: #007BFF; color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer;">
+                    View Travel Times
                 </button>
                 <select id="corridor-dropdown" style="margin-top: 10px; width: 100%; padding: 5px;">
                     <option disabled selected>Loading corridors...</option>
@@ -536,6 +541,73 @@ def clustering(tmc_data):
     daily_volumes["cluster"] = kmeans.fit_predict(daily_volumes[["normalized_volume"]])
 
     return daily_volumes
+
+
+def determine_direction(coords):
+    delta_lat = lat2 - lat1
+    delta_lon = lon2 - lon1
+
+    # Determine North-South direction
+    if delta_lat > 0:
+        ns_direction = "N"
+    elif delta_lat < 0:
+        ns_direction = "S"
+    else:
+        ns_direction = ""
+
+    # Determine East-West direction
+    if delta_lon > 0:
+        ew_direction = "E"
+    elif delta_lon < 0:
+        ew_direction = "W"
+    else:
+        ew_direction = ""
+
+    # Combine directions
+    direction = ns_direction + ew_direction
+    return direction or "Stationary"  # Return "Stationary" if no movement
+
+
+def getCorridorList(corridor_id, conn):
+    cursor = conn.cursor()
+    table = f"Corridor_Table"
+
+    # Query the SQL database to find the Day_Plan
+    query = f"""
+                    SELECT *
+                    FROM {table}       
+                    WHERE corridorId = {corridor_id};
+                    """
+    cursor.execute(query)
+    data = cursor.fetchall()
+
+    column_names = ["corridorId", "corridorName", "latitude", "longitude", "intersectionId"]
+
+    # Convert tuples to dictionaries - using column name
+    corridor_table = [dict(zip(column_names, row)) for row in data]
+
+    df_corridor = pd.DataFrame(corridor_table)  # convert to dataframe
+
+
+
+    table = f"Travel_Time_Table_0{corridor_id}" # TODO - need to do something about the 0
+
+    # Query the SQL database to find the Day_Plan
+    query = f"""
+                        SELECT *
+                        FROM {table}       
+                        """
+    cursor.execute(query)
+    data = cursor.fetchall()
+
+    column_names = ["Timestamp", "latitude", "longitude", "runId"]
+
+    # Convert tuples to dictionaries - using column name
+    TT_table = [dict(zip(column_names, row)) for row in data]
+
+    df_Travel_Runs = pd.DataFrame(TT_table)  # convert to dataframe
+
+    return df_corridor, df_Travel_Runs
 
 
 @app.route("/")
@@ -920,13 +992,46 @@ def add_corridor():
 
 
 
+@app.route("/travel_time_report")
+def travel_time_report():
+    server = Mio_config['server']
+    database = Mio_config['database']
 
+    corridor_id = request.args.get("corridorId")  # Fetch the intersection ID
 
+    conn = connect_to_db(server, database)
 
-@app.route("/TT_chart")
-def TT_chart():
+    df_cor, df_tt = getCorridorList(corridor_id, conn)
+
+    # Assuming df_cor is your DataFrame and it has 'latitude' and 'longitude' columns
+    first_lat, first_lon = df_cor.iloc[0]['latitude'], df_cor.iloc[0]['longitude']
+
+    df_cor['distance'] = df_cor.apply(
+        lambda row: haversine(
+            (first_lat, first_lon),
+            (row['latitude'], row['longitude']),
+            unit=Unit.METERS  # You can change this to METERS if needed
+        ) * 3.28084,
+        axis=1
+    )
+
+    # SAme to the Travel Time Data
+    df_tt['distance'] = df_tt.apply(
+        lambda row: haversine(
+            (first_lat, first_lon),
+            (row['latitude'], row['longitude']),
+            unit=Unit.METERS  # You can change this to METERS if needed
+        ) * 3.28084,
+        axis=1
+    )
+
+    print(df_cor, df_tt)
+    corridor_data_json = df_cor.to_dict(orient='records')
+    travelRun_data_json = df_tt.to_dict(orient='records')
 
     return render_template("TTpage.html",
+                           corridor_data=json.dumps(corridor_data_json, default=str),
+                           travel_run_data=json.dumps(travelRun_data_json, default=str),
                            )
 
 

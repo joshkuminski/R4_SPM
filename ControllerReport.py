@@ -319,14 +319,14 @@ if __name__ == "__main__":
     intersection_id = "Schedule_Table_04_43_285"
     #intersection_id = "Controller_Table_04_43_493"
     #intersection_id = "Day_Plan_Table_04_43_327"
-    free_table = "Free_Table_04_43_285"
+    free_table = "Free_Table_04_43_3271"
     '''
     # Create New Table
     conn = connect_to_db(server, database)
 
     create_table(conn, intersection_id)
     '''
-    file_path = "./Database_Folders/ControllerTables/04-43-285/32850_Standard.csv"
+    file_path = "./Database_Folders/ControllerTables/04-43-3271/33271_Standard.csv"
     df, df_fr = import_csv(file_path)
     #load_to_db(df, server, database, intersection_id)
 

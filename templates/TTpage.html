@@ -16,10 +16,44 @@
     
 </head>
 <body>
+    <!-- Dropdown controls -->
+    <div id="controls">
+        <div>
+            <label for="start-date">Start Date:</label>
+            <input type="date" id="start-date">
+        </div>
+        <label for="run-select">Select Phase:</label>
+    <select id="run-select">
+        <option value="1">Run 1</option>
+    </select>
+    </div>
+ 
     <canvas id="timeSpaceChart" width="800" height="400"></canvas>
 
+    
+
     <script>
-        
+        const TTData = JSON.parse('{{ travel_run_data | safe }}');
+        const CorridorData = JSON.parse('{{ corridor_data | safe }}');
+
+        console.log(TTData, CorridorData);
+
+        // Extract unique dates and times
+        const timestamps = TTData.map(entry => new Date(entry.Timestamp));
+        const uniqueDates = [...new Set(timestamps.map(ts => ts.toISOString().split('T')[0]))];
+        console.log(uniqueDates);
+        // Initialize Flatpickr for date inputs
+        const startDateInput = document.getElementById('start-date');
+
+
+        //TODO Something weird is goin on with this. THe highlighted days are acutal the day before 
+        // the unique dates.
+        flatpickr(startDateInput, {
+            dateFormat: "Y-m-d",
+            enable: uniqueDates.map(date => new Date(date)),
+            //onChange: updateChart
+        });
+
     </script>
     <script src="{{ url_for('static', filename='TT_chart.js') }}"></script>
 

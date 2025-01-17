@@ -1,17 +1,6 @@
 const ctx = document.getElementById('timeSpaceChart').getContext('2d');
 
-// Data: Intersections and Travel Times
-const intersections = [
-    { name: "Intersection A", lat: 37.7749 },
-    { name: "Intersection B", lat: 37.8044 },
-    { name: "Intersection C", lat: 37.8715 },
-];
-
-const travelTimes = [
-    { start: "Intersection A", end: "Intersection B", time: 10 }, // 10 minutes
-    { start: "Intersection B", end: "Intersection C", time: 15 }, // 15 minutes
-];
-
+// EXAMPLE Data: Intersections and Travel Times
 const signalTimings = {
     "Intersection A": [
         { start: "2025-01-13T08:00:00Z", end: "2025-01-13T08:10:00Z", color: 'green' },
@@ -27,34 +16,46 @@ const signalTimings = {
     ],
 };
 
-// Calculate Vehicle Trajectory
-const vehicleTrajectory = [];
-let currentTime = new Date("2025-01-13T08:00:00Z");
-intersections.forEach((intersection, i) => {
-    vehicleTrajectory.push({ x: currentTime.toISOString(), y: intersection.lat });
-    if (i < travelTimes.length) {
-        currentTime.setMinutes(currentTime.getMinutes() + travelTimes[i].time);
-    }
-});
 
-// Generate Signal Timing Annotations
-const annotations = {};
-intersections.forEach((intersection) => {
-    const timings = signalTimings[intersection.name];
-    timings.forEach((timing, i) => {
-        annotations[`${intersection.name}_signal${i}`] = {
-            type: 'box',
-            xMin: timing.start,
-            xMax: timing.end,
-            yMin: intersection.lat - 0.005,
-            yMax: intersection.lat + 0.005,
-            backgroundColor: timing.color === 'green' ? 'rgba(0, 255, 0, 0.3)' :
-                              timing.color === 'red' ? 'rgba(255, 0, 0, 0.3)' : 
-                              'rgba(255, 255, 0, 0.3)',
-            borderWidth: 0,
-        };
-    });
-});
+// Convert data for Chart.js
+const intersectionData = CorridorData.map(intersection => ({
+    x: null, // No specific timestamp for intersections
+    y: intersection.distance,
+    label: intersection.intersectionId,
+}));
+
+const trajectoryData = TTData.slice(0,500).map(point => ({
+    x: new Date(point.Timestamp).toISOString(),
+    y: point.distance,
+}));
+
+// Map distances to intersection IDs for the y-axis labels
+const yLabels = CorridorData.reduce((acc, intersection) => {
+    acc[intersection.distance] = intersection.intersectionId;
+    return acc;
+}, {});
+
+// Map distances to intersection IDs for the y-axis
+const yTicks = CorridorData.map(intersection => ({
+    value: intersection.distance,
+    label: `${intersection.intersectionId} (${intersection.distance.toFixed(0)} ft)`,
+}));
+
+// Create horizontal lines to indicate the intersections for now
+const horizontalLines = CorridorData.map(intersection => ({
+    label: `Line at ${intersection.intersectionId}`,
+    data: [
+        { x: '2024-07-08T21:54:57Z', y: intersection.distance }, // Start of line
+        { x: '2024-07-08T22:05:07Z', y: intersection.distance }, // End of line
+    ],
+    borderColor: 'red',
+    borderWidth: 1,
+    showLine: true,
+    pointRadius: 0, // No points, just a line
+}));
+
+
+console.log(yTicks);
 
 // Chart.js Configuration
 const config = {
@@ -63,36 +64,64 @@ const config = {
         datasets: [
             {
                 label: 'Vehicle Trajectory',
-                data: vehicleTrajectory,
+                data: trajectoryData,
                 borderColor: 'blue',
                 borderWidth: 2,
                 showLine: true,
                 fill: false,
             },
+            ...horizontalLines,
         ],
     },
     options: {
         responsive: true,
         plugins: {
-            annotation: { annotations },
             legend: { position: 'top' },
+            zoom: {
+                pan: {
+                    enabled: true,
+                    mode: 'x', // Allow panning in the x-axis direction
+                },
+                zoom: {
+                    wheel: {
+                        enabled: true, // Enable zooming with the mouse wheel
+                    },
+                    pinch: {
+                        enabled: true, // Enable zooming with pinch gestures
+                    },
+                    drag: {
+                        enabled: false, // Enable zooming by dragging a rectangle
+                    },
+                    mode: 'x', // Allow zooming in both x and y axes
+                },
+            },
         },
+        
         scales: {
             x: {
                 type: 'time',
                 time: {
-                    unit: 'minute',
-                    displayFormats: { minute: 'HH:mm' },
+                    unit: 'second',
+                    displayFormats: { second: 'HH:mm:ss' },
                 },
-                title: { display: true, text: 'Time (HH:mm)' },
+                title: { display: true, text: 'Time (HH:mm:ss)' },
             },
             y: {
-                title: { display: true, text: 'Latitude' },
-                ticks: { callback: (value) => `${value.toFixed(4)}°` },
+                type: 'linear',
+                title: { display: true, text: 'Distance (feet)' },
+                ticks: {
+                    callback: (value) => {
+                        const tick = yTicks.find(t => t.value === value);
+                        return tick ? tick.label : `${value.toFixed(0)} ft`;
+                    },
+                    autoSkip: false, // Ensure all ticks are shown
+                    stepSize: null,  // Dynamically align ticks
+                },
             },
         },
     },
 };
+
 
 // Create Chart
 new Chart(ctx, config);
