@@ -189,21 +189,27 @@ def fetch_tmc_data(intersection_id, start_date=None, end_date=None):
     return tmc_data
 
 
-def fetch_split_data(name, customId=None):
+def fetch_split_data(name, customId=None, selectDate=None):
     server = Mio_config['server']
     database = Mio_config['database']
-
-    pythonsql = "./sql/split_monitor.sql"
-
-    conn = connect_to_db(server, database)
-    cursor = conn.cursor()
 
     if customId == 'None':
         customId = name.split(' ')[0]
 
     table_name = f"Split_Table_{customId.replace('-', '_')}"  # Sanitize table name
-    int_var_dict = {'split_table': table_name
+    
+    if selectDate:
+        pythonsql = "./sql/split_monitor_TT.sql"
+        int_var_dict = {'split_table': table_name,
+                        'SelectedDate': selectDate
                     }
+    else:
+        pythonsql = "./sql/split_monitor.sql"
+        int_var_dict = {'split_table': table_name
+                    }
+
+    conn = connect_to_db(server, database)
+    cursor = conn.cursor()
 
     with open(pythonsql, 'r') as f:
         query = f.read()
@@ -328,7 +334,7 @@ def fetch_free_table(conn, customId):
     df["MinSplit"] = df.iloc[:, cols_to_add].sum(axis=1)  # Use axis=1 to sum rows
 
     MinGreen = df["MinSplit"]
-    print(MinGreen)
+    #print(MinGreen)
 
     return df, MinGreen
 
@@ -608,6 +614,31 @@ def getCorridorList(corridor_id, conn):
     df_Travel_Runs = pd.DataFrame(TT_table)  # convert to dataframe
 
     return df_corridor, df_Travel_Runs
+
+
+def fetch_SequenceKey_table(conn):
+    cursor = conn.cursor()
+    table = f"Sequence_Key"
+
+    # Query the SQL database to find the Day_Plan
+    query = f"""
+                SELECT *
+                FROM {table}       
+                """
+    try:
+        cursor.execute(query)
+        data = cursor.fetchall()
+    except:
+        return []
+
+    column_names = ["Seq_Num", "Phase_Seq"]
+
+    # Convert tuples to dictionaries - using column name
+    sequence_table = [dict(zip(column_names, row)) for row in data]
+
+    #df = pd.DataFrame(sequence_table)  # convert to dataframe
+
+    return sequence_table
 
 
 @app.route("/")
@@ -918,7 +949,7 @@ def getControllerData():
     action_plan_json = action_plan.to_dict(orient='records')
     MinGreen_json = MinGreen.to_dict()
 
-    print(action_plan, free_table)
+    #print(action_plan, free_table)
     # Create a JSON response using json.dumps
     response_data = {
         "action_plan_json": action_plan_json,
@@ -1025,7 +1056,7 @@ def travel_time_report():
         axis=1
     )
 
-    print(df_cor, df_tt)
+    #print(df_cor, df_tt)
     corridor_data_json = df_cor.to_dict(orient='records')
     travelRun_data_json = df_tt.to_dict(orient='records')
 
@@ -1033,6 +1064,130 @@ def travel_time_report():
                            corridor_data=json.dumps(corridor_data_json, default=str),
                            travel_run_data=json.dumps(travelRun_data_json, default=str),
                            )
+
+
+
+@app.route("/getSplitData_TT", methods=["POST"])
+def getSplitDataTT():
+    selected_day = request.json.get("selected_day", [])
+    custom_id = request.json.get("corridor_id", [])
+    corridor_list = request.json.get("corridor_data", [])
+    
+
+    split_data = []
+    action_data = []
+    free_data = []
+    for intersection in corridor_list:
+        # Grab the Data from the MSSMS database
+        custom_id = intersection['intersectionId']
+        splits = fetch_split_data(custom_id, customId=custom_id, selectDate=selected_day)
+        df_splits = pd.DataFrame(splits)
+
+        day_plan_num, conn = fetch_day_plan(selected_day, custom_id) # Will return the Day Plan to Use
+        action_plan = fetch_controller_actions(day_plan_num, conn, custom_id) 
+        free_table, MinGreen = fetch_free_table(conn, custom_id)
+        # Error Action plan is returning duplicate rows
+        action_plan = action_plan.drop_duplicates(subset=None, keep='first', inplace=False)
+        action_data_json = action_plan.to_dict(orient='records')
+
+        Seq_Key = fetch_SequenceKey_table(conn)
+
+        # Convert intervals to a list of start/end times
+        time_intervals = []
+        for i, value in enumerate(action_data_json):
+            hour, minute = int(value['Hour']), int(value['Min'])
+            start_time = datetime.strptime(f"{selected_day} {hour:02}:{minute:02}:00", "%Y-%m-%d %H:%M:%S")
+            if i + 1 < len(action_data_json):
+                next_hour = int(action_data_json[i + 1]['Hour'])
+                next_minute = int(action_data_json[i + 1]['Min'])
+                end_time = datetime.strptime(f"{selected_day} {next_hour:02}:{next_minute:02}:00", "%Y-%m-%d %H:%M:%S")
+            else:
+                end_time = datetime.strptime(f"{selected_day} 23:59:59", "%Y-%m-%d %H:%M:%S")  # Last interval goes to the end of the day
+
+            time_intervals.append({
+                "start": start_time,
+                "end": end_time,
+                "action": value['Action']
+            })
+        
+        #print(time_intervals)
+
+        # Split data into groups based on intervals
+        grouped_data = []
+        if splits: 
+            for interval in time_intervals:
+                if interval["action"] in ["Free", "25"]:
+                    continue  # Skip intervals with Action == 'Free' or '25'
+
+                group = df_splits[
+                    (df_splits['Timestamp'] >= interval['start']) &
+                    (df_splits['Timestamp'] < interval['end'])
+                ]
+
+                if not group.empty:
+                    grouped_data.append(group.to_dict(orient='records'))
+
+        split_data.append(grouped_data)
+
+        Annotation_List = []
+        # Create Annotation list for each split in splits
+        # grouped data will have a length equal to the action_data - 2 Does not include the first and last 
+        if splits: 
+            Mode = action_data_json[0]['Phase_Mode']
+            for i, group in enumerate(grouped_data):
+                Pattern = group[i]['Pattern']
+                Coord_Phase = action_data_json[i + 1]['Coord_Phase']    
+                SeqNum = action_data_json[i + 1]['Sequence']   
+                Seq = Seq_Key[int(SeqNum) - 1]['Phase_Seq']
+
+                Seq_list = []
+                for S in Seq.split(','):
+                    Seq_list.append(int(S))
+
+                print(Pattern, Coord_Phase, SeqNum, Mode, Seq_list)
+
+                for split in group:
+                    pass
+                    #print(split)
+
+
+        action_data.append(action_data_json)
+        free_data_json = free_table.to_dict(orient='records')
+        free_data.append(free_data_json)
+
+        
+
+        
+        '''
+        TODO - Create the annotations for the split report
+        1. Dont need to do if Timestamp is in the Free Range - drop all this data. 
+        2. Breakup data into sections by Pattern #s or TOD 
+        3. 
+        '''
+    
+
+
+
+
+    
+    # Convert to DataFrame
+    df = pd.DataFrame(action_data)
+    action_data_json = df.to_dict(orient='records')
+    df = pd.DataFrame(free_data)
+    free_data_json = df.to_dict(orient='records')
+    df = pd.DataFrame(Seq_Key)
+    key_data_json = df.to_dict(orient='records')
+    #response_json = json.dumps(split_data, default=str)
+
+    response_data = {
+        "action_data": action_data_json,
+        "free_data": free_data_json,
+        "split_data": split_data,
+        "Key": key_data_json
+    }
+    response_json = json.dumps(response_data, default=str)
+
+    return Response(response_json, content_type='application/json')  # Set content type explicitly
 
 
 if __name__ == "__main__":

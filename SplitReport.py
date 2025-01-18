@@ -66,6 +66,10 @@ def import_csv(file):
     # Drop duplicate timestamps (keeping the first occurrence)
     df = df.drop_duplicates(subset=['Timestamp'], keep='first')
 
+    # ERROR - for some reason on larger datasets we need this fix
+    df['Pattern'] = df['Pattern'].astype(int).astype(str)
+    df['Cycle'] = df['Cycle'].astype(int).astype(str)
+
     # Save the updated DataFrame back to a CSV
     #output_path = "filtered_file.csv"
     #df.to_csv(output_path, index=False)
@@ -98,7 +102,7 @@ def create_table(conn):
     """
     cursor = conn.cursor()
 
-    intersection_id = "04_43_485"
+    intersection_id = "04_43_493"
 
     # Create the table if it doesn't exist
     create_table_query = f"""
@@ -135,58 +139,26 @@ def create_table(conn):
     conn.commit()
     conn.close()
 
+def load_to_db(df, server, database, table_name):
+    # Connection string
+    connection_string = f"mssql+pyodbc://@{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server&Trusted_Connection=yes"
 
-def load_to_db(df, server, database, table_name, unique_columns=['Timestamp']):
-        """
-        Inserts only new rows (not already in the database) into a SQL table.
+    # Create a SQLAlchemy engine
+    engine = create_engine(connection_string)
 
-        Parameters:
-            df (DataFrame): The DataFrame containing the data to be loaded.
-            server (str): The SQL Server name.
-            database (str): The database name.
-            table_name (str): The target table name.
-            unique_columns (list): List of column names used to identify unique rows.
-        """
-        # Connection string
-        connection_string = f"mssql+pyodbc://@{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server&Trusted_Connection=yes"
+    try:
+        # Append the DataFrame to the SQL table
+        df.to_sql(name=table_name, con=engine, if_exists="append", index=False)
 
-        # Create a SQLAlchemy engine
-        engine = create_engine(connection_string)
-
-        try:
-            # Read the existing data from the table
-            query = f"SELECT {', '.join(unique_columns)} FROM {table_name}"
-            existing_data = pd.read_sql(query, con=engine)
-
-            # Ensure data types are consistent
-            for col in unique_columns:
-                if col in df.columns and col in existing_data.columns:
-                    if pd.api.types.is_datetime64_any_dtype(existing_data[col]):
-                        df[col] = pd.to_datetime(df[col])
-                    elif pd.api.types.is_object_dtype(existing_data[col]):
-                        df[col] = df[col].astype(str)
-                    elif pd.api.types.is_numeric_dtype(existing_data[col]):
-                        df[col] = pd.to_numeric(df[col])
-
-            # Find rows that are not already in the database
-            new_data = pd.merge(df, existing_data, on=unique_columns, how='left', indicator=True)
-            new_data = new_data[new_data['_merge'] == 'left_only'].drop(columns=['_merge'])
-
-            # Insert only the new rows into the database
-            if not new_data.empty:
-                new_data.to_sql(name=table_name, con=engine, if_exists="append", index=False)
-                print(f"New data successfully inserted into {table_name}")
-            else:
-                print("No new data to insert.")
-
-        except Exception as e:
-            print(f"An error occurred: {e}")
+        print(f"Data successfully inserted into {table_name}")
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 
 if __name__ == "__main__":
     server = Mio_config['server']
     database = Mio_config['database']
-    intersection_id = "Split_Table_04_43_494"
+    intersection_id = "Split_Table_04_43_065"
 
     '''
     # Create New Table
@@ -194,12 +166,9 @@ if __name__ == "__main__":
 
     create_table(conn)
     '''
-    file_path = "./SplitReports/SplitReport_3494_12_01_2024.csv"
+    file_path = "./Database_Folders/SplitReports/SplitReport_30650_07_16_2024.csv"
     df = import_csv(file_path)
 
     #print(df)
     load_to_db(df, server, database, intersection_id)
-
-
-
 

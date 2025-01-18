@@ -1,5 +1,7 @@
 const ctx = document.getElementById('timeSpaceChart').getContext('2d');
 
+let TTChart = null;
+
 // EXAMPLE Data: Intersections and Travel Times
 const signalTimings = {
     "Intersection A": [
@@ -17,6 +19,9 @@ const signalTimings = {
 };
 
 
+
+
+
 // Convert data for Chart.js
 const intersectionData = CorridorData.map(intersection => ({
     x: null, // No specific timestamp for intersections
@@ -24,8 +29,8 @@ const intersectionData = CorridorData.map(intersection => ({
     label: intersection.intersectionId,
 }));
 
-const trajectoryData = TTData.slice(0,500).map(point => ({
-    x: new Date(point.Timestamp).toISOString(),
+const trajectoryData = TTData.slice(0,505).map(point => ({
+    x: new Date(point.Timestamp),
     y: point.distance,
 }));
 
@@ -57,71 +62,87 @@ const horizontalLines = CorridorData.map(intersection => ({
 
 console.log(yTicks);
 
-// Chart.js Configuration
-const config = {
-    type: 'scatter',
-    data: {
-        datasets: [
-            {
-                label: 'Vehicle Trajectory',
-                data: trajectoryData,
-                borderColor: 'blue',
-                borderWidth: 2,
-                showLine: true,
-                fill: false,
-            },
-            ...horizontalLines,
-        ],
-    },
-    options: {
-        responsive: true,
-        plugins: {
-            legend: { position: 'top' },
-            zoom: {
-                pan: {
-                    enabled: true,
-                    mode: 'x', // Allow panning in the x-axis direction
-                },
-                zoom: {
-                    wheel: {
-                        enabled: true, // Enable zooming with the mouse wheel
-                    },
-                    pinch: {
-                        enabled: true, // Enable zooming with pinch gestures
-                    },
-                    drag: {
-                        enabled: false, // Enable zooming by dragging a rectangle
-                    },
-                    mode: 'x', // Allow zooming in both x and y axes
-                },
-            },
-        },
-        
-        scales: {
-            x: {
-                type: 'time',
-                time: {
-                    unit: 'second',
-                    displayFormats: { second: 'HH:mm:ss' },
-                },
-                title: { display: true, text: 'Time (HH:mm:ss)' },
-            },
-            y: {
-                type: 'linear',
-                title: { display: true, text: 'Distance (feet)' },
-                ticks: {
-                    callback: (value) => {
-                        const tick = yTicks.find(t => t.value === value);
-                        return tick ? tick.label : `${value.toFixed(0)} ft`;
-                    },
-                    autoSkip: false, // Ensure all ticks are shown
-                    stepSize: null,  // Dynamically align ticks
-                },
-            },
-        },
-    },
-};
 
+function updateTravelTimeChart(){
+    const selectedDate = document.getElementById('start-date').value; // Format: 'YYYY-MM-DD'
+    const selectedRun = document.getElementById("run-select").value;
+
+    // Get filtered data for the selected phase
+    //const runData = getRunData(selectedRun);
+
+    // Destroy the previous chart instance if it exists
+    if (TTChart) {
+        TTChart.destroy();
+    }
+
+    // Initialize the chart
+    TTChart = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+            datasets: [
+                {
+                    label: 'Vehicle Trajectory',
+                    data: trajectoryData,
+                    borderColor: 'blue',
+                    borderWidth: 2,
+                    showLine: true,
+                    fill: false,
+                },
+                ...horizontalLines,
+            ],
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'top' },
+                zoom: {
+                    pan: {
+                        enabled: true,
+                        mode: 'x', // Allow panning in the x-axis direction
+                    },
+                    zoom: {
+                        wheel: {
+                            enabled: true, // Enable zooming with the mouse wheel
+                        },
+                        pinch: {
+                            enabled: true, // Enable zooming with pinch gestures
+                        },
+                        drag: {
+                            enabled: false, // Enable zooming by dragging a rectangle
+                        },
+                        mode: 'x', // Allow zooming in both x and y axes
+                    },
+                },
+            },
+            
+            scales: {
+                x: {
+                    type: 'time',
+                    time: {
+                        unit: 'second',
+                        displayFormats: { second: 'HH:mm:ss' },
+                    },
+                    title: { display: true, text: 'Time (HH:mm:ss)' },
+                },
+                y: {
+                    type: 'linear',
+                    title: { display: true, text: 'Distance (feet)' },
+                    ticks: {
+                        callback: (value) => {
+                            const tick = yTicks.find(t => t.value === value);
+                            return tick ? tick.label : `${value.toFixed(0)} ft`;
+                        },
+                        autoSkip: false, // Ensure all ticks are shown
+                        stepSize: null,  // Dynamically align ticks
+                    },
+                },
+            },
+        },
+    });
+}
+
+// Initial chart rendering
+updateTravelTimeChart();
 
 // Create Chart
-new Chart(ctx, config);
+//new Chart(ctx, config);

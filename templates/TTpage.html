@@ -28,13 +28,24 @@
     </select>
     </div>
  
-    <canvas id="timeSpaceChart" width="800" height="400"></canvas>
-
+    <!-- Chart container -->
+    <div id="charts-container">
+        <canvas id="timeSpaceChart"></canvas>
+    </div>
     
 
     <script>
+        //Dataset from Flask
         const TTData = JSON.parse('{{ travel_run_data | safe }}');
         const CorridorData = JSON.parse('{{ corridor_data | safe }}');
+        let split_data = null;
+    </script>
+
+    <script src="{{ url_for('static', filename='TT_chart.js') }}"></script>
+
+    <script>
+        // Add event listener for phase selector
+        document.getElementById("run-select").addEventListener("change", updateTravelTimeChart);
 
         console.log(TTData, CorridorData);
 
@@ -46,16 +57,98 @@
         const startDateInput = document.getElementById('start-date');
 
 
-        //TODO Something weird is goin on with this. THe highlighted days are acutal the day before 
+        
         // the unique dates.
         flatpickr(startDateInput, {
             dateFormat: "Y-m-d",
-            enable: uniqueDates.map(date => new Date(date)),
-            //onChange: updateChart
+            enable: uniqueDates.map(date => {
+                const localDate = new Date(date); // Convert string to Date object
+                //Fix for the time zone issue - this may be a problem with new data - We'll see
+                return new Date(localDate.getTime() + localDate.getTimezoneOffset() * 60 * 1000); // Adjust to local time
+            }),
+            utc: true,
+            onChange: (selectedDates, dateStr) => {
+                // Filter TTData based on selected date
+                const filteredTTData = TTData.filter(entry => entry.Timestamp.startsWith(dateStr));
+                
+                // Extract unique runIds from the filtered data
+                const uniqueRunIds = [...new Set(filteredTTData.map(entry => entry.runId))];
+
+                // Populate the dropdown with filtered runIds
+                populateRunDropdown(uniqueRunIds);
+                updateControllerData(dateStr);
+            }
         });
 
+
+        // Function to populate the run dropdown with unique runIds
+        function populateRunDropdown(runIds) {
+            const runDropdown = document.getElementById('run-select');
+            runDropdown.innerHTML = ''; // Clear existing options
+
+            // Add a default option
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = 'Select a Run';
+            runDropdown.appendChild(defaultOption);
+
+            // Add options for each unique runId
+            runIds.forEach(runId => {
+                const option = document.createElement('option');
+                option.value = runId;
+                option.textContent = `Run ${runId}`;
+                runDropdown.appendChild(option);
+            });
+        }
+
+
+
+         // Retrieve the Controller Split Data from Flask
+        function updateControllerData(selectedDate) {
+            // Extract the corridorId from the URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const corridorId = urlParams.get('corridorId'); // Retrieves the value of corridorId
+  
+            // Create the payload to send to the server
+            const payload = { selected_day: selectedDate,
+                            corridor_id : corridorId,
+                            corridor_data: CorridorData
+            };
+
+            // Send a POST request to the server
+            fetch('/getSplitData_TT', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch controller data');
+                }
+                return response.json(); // Parse JSON response
+            })
+            .then(data => {
+                //console.log("Controller Data:", data);
+                split_data = data;
+                //free_data = data.free_data;
+                //action_data = data.action_data;
+                //Seq_Key = data.Seq_Key;
+                console.log(split_data);
+                //console.log(free_data);
+                //console.log(action_data);
+                //console.log(Seq_Key);
+                updateTravelTimeChart(); 
+                
+            })
+            .catch(error => {
+                console.error('Error fetching controller data:', error);
+            });
+        }
+
     </script>
-    <script src="{{ url_for('static', filename='TT_chart.js') }}"></script>
+    
 
 </body>
 </html>
