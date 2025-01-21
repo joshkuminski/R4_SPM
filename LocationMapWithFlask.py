@@ -19,7 +19,7 @@ from sqlalchemy import create_engine
 import math
 import numpy as np
 from haversine import haversine, Unit
-
+from UtilityFunctions import create_time_intervals, group_split_data, create_annotations
 
 app = Flask(__name__)
 
@@ -1067,8 +1067,8 @@ def travel_time_report():
 
 
 
-@app.route("/getSplitData_TT", methods=["POST"])
-def getSplitDataTT():
+@app.route("/getSplitData_TT_old", methods=["POST"])
+def getSplitDataTT_old():
     selected_day = request.json.get("selected_day", [])
     custom_id = request.json.get("corridor_id", [])
     corridor_list = request.json.get("corridor_data", [])
@@ -1077,6 +1077,13 @@ def getSplitDataTT():
     split_data = []
     action_data = []
     free_data = []
+
+    Intersection_Annotations = []
+    Group_Annotations = []
+    Cycle_Annotations = []
+    Line_Annotations = []
+    Phase_Annotations = []
+
     for intersection in corridor_list:
         # Grab the Data from the MSSMS database
         custom_id = intersection['intersectionId']
@@ -1143,20 +1150,140 @@ def getSplitDataTT():
                 Seq_list = []
                 for S in Seq.split(','):
                     Seq_list.append(int(S))
+                
+                Seq_list_temp = []
+                if Mode == 'QSeq':
+                    Seq_list_temp = Seq_list[:4]
+                    Seq_list_temp.extend(Seq_list[6:])
+                    Seq_list = [Seq_list_temp, Seq_list[4:6]]
+                elif Mode == 'STD8':
+                    Seq_list = [Seq_list[:4], Seq_list[4:]]
 
-                print(Pattern, Coord_Phase, SeqNum, Mode, Seq_list)
+  
+                # Create Annotation list
+                color_list = ["Green", "Green_left", "Yellow", "Red"]
 
-                for split in group:
-                    pass
-                    #print(split)
+                for cycle in group:  # loop through each cycle - use current Seq_list
+                    #for clr_id, color in enumerate(color_list):
+                    start = cycle["Timestamp"]
+                    
+                    
+                    for ph_id, phase in enumerate(Seq_list[0]):
+                        if cycle[f"SP{phase}_split"] is not None:
+
+                            if ph_id < 2:
+                                Split = int(cycle[f"SP{phase}_split"]) 
+                                if Split > 0:
+                                    Yel = int(free_table["Yel"][int(phase) - 1])
+                                    Red = int(free_table["Red"][int(phase) - 1])
+
+                                    Gsec = Split - (Yel + Red)
+                                    Ysec = Split - Red
+                                    Rsec = Split
+
+                                    end = start + pd.Timedelta(seconds=Gsec)
+                                    Yel_end = start + pd.Timedelta(seconds=Ysec) 
+                                    Red_end = start + pd.Timedelta(seconds=Rsec)
+
+                                    Green_Annotation = {"start": start,
+                                                        "end": end,
+                                                        "color": "Green"}
+                                    Yellow_Annotation = {"start": end,
+                                                        "end": Yel_end,
+                                                        "color": "Yel"}
+                                    Red_Annotation = {"start": Yel_end,
+                                                        "end": Red_end,
+                                                        "color": "Red"}
+
+                                    Annotation = [Green_Annotation, Yellow_Annotation, Red_Annotation]
+                                    start = Red_end
+                            
+                                    Phase_Annotations.append({f"Phase_{phase}": Annotation})
+                            else:
+                                Split = int(cycle[f"SP{phase}_split"]) 
+                                if Split > 0:
+                                    end = start + pd.Timedelta(seconds=Split)
+
+                                    Annotation = {"start": start,
+                                                "end": end,
+                                                "color": "AllRed"}
+
+                                    Annotation = [Annotation]
+                                    start = end
+                            
+                                    Phase_Annotations.append({f"Phase_{phase}": Annotation}) 
+
+                    Line_Annotations.append({"Line_1": Phase_Annotations})
+                    Phase_Annotations = []
+                    start = cycle["Timestamp"]
+
+                    for ph_id, phase in enumerate(Seq_list[1]):
+                        if cycle[f"SP{phase}_split"] is not None:
+
+                            if ph_id < 2:
+                                Split = int(cycle[f"SP{phase}_split"])
+                                if Split > 0:
+                                    Yel = int(free_table["Yel"][int(phase) - 1])
+                                    Red = int(free_table["Red"][int(phase) - 1])
+
+                                    Gsec = Split - (Yel + Red)
+                                    Ysec = Split - Red
+                                    Rsec = Split
+
+                                    end = start + pd.Timedelta(seconds=Gsec)
+                                    Yel_end = start + pd.Timedelta(seconds=Ysec) 
+                                    Red_end = start + pd.Timedelta(seconds=Rsec)
+
+                                    Green_Annotation = {"start": start,
+                                                        "end": end,
+                                                        "color": "Green"}
+                                    Yellow_Annotation = {"start": end,
+                                                        "end": Yel_end,
+                                                        "color": "Yel"}
+                                    Red_Annotation = {"start": Yel_end,
+                                                        "end": Red_end,
+                                                        "color": "Red"}
+
+                                    Annotation = [Green_Annotation, Yellow_Annotation, Red_Annotation]
+                                    start = Red_end
+                            
+                                    Phase_Annotations.append({f"Phase_{phase}": Annotation})
+
+                            else:
+                                Split = int(cycle[f"SP{phase}_split"]) 
+                                if Split > 0:
+                                    end = start + pd.Timedelta(seconds=Split)
+
+                                    Annotation = {"start": start,
+                                                "end": end,
+                                                "color": "AllRed"}
+
+                                    Annotation = [Annotation]
+                                    start = end
+                            
+                                    Phase_Annotations.append({f"Phase_{phase}": Annotation})  
 
 
+                    Line_Annotations.append({"Line_2": Phase_Annotations})
+                    Phase_Annotations = []
+
+                    Cycle_Annotations.append(Line_Annotations)
+                    Line_Annotations = []
+
+                Group_Annotations.append({f"Group_{i}": Cycle_Annotations})
+                Cycle_Annotations = []
+               
+
+  
         action_data.append(action_data_json)
         free_data_json = free_table.to_dict(orient='records')
         free_data.append(free_data_json)
 
         
+        Intersection_Annotations.append({custom_id: Group_Annotations})
+        Group_Annotations = []
 
+        #print(Intersection_Annotations)
         
         '''
         TODO - Create the annotations for the split report
@@ -1164,11 +1291,6 @@ def getSplitDataTT():
         2. Breakup data into sections by Pattern #s or TOD 
         3. 
         '''
-    
-
-
-
-
     
     # Convert to DataFrame
     df = pd.DataFrame(action_data)
@@ -1183,11 +1305,68 @@ def getSplitDataTT():
         "action_data": action_data_json,
         "free_data": free_data_json,
         "split_data": split_data,
-        "Key": key_data_json
+        "Key": key_data_json,
+        "Annotations":Intersection_Annotations
     }
     response_json = json.dumps(response_data, default=str)
 
     return Response(response_json, content_type='application/json')  # Set content type explicitly
+
+
+# Refactored function
+@app.route("/getSplitData_TT", methods=["POST"])
+def getSplitDataTT():
+    selected_day = request.json.get("selected_day", [])
+    corridor_list = request.json.get("corridor_data", [])
+
+    # Data containers
+    split_data = []
+    action_data = []
+    free_data = []
+    intersection_annotations = []
+
+    # Iterate through each intersection in the corridor list
+    for intersection in corridor_list:
+        custom_id = intersection['intersectionId']
+
+        # Fetch data from the database
+        splits = fetch_split_data(custom_id, customId=custom_id, selectDate=selected_day)
+        if not splits:
+            continue
+
+        df_splits = pd.DataFrame(splits)
+        day_plan_num, conn = fetch_day_plan(selected_day, custom_id)
+        action_plan = fetch_controller_actions(day_plan_num, conn, custom_id).drop_duplicates()
+        free_table, MinGreen = fetch_free_table(conn, custom_id)
+        seq_key = fetch_SequenceKey_table(conn)
+
+        action_data_json = action_plan.to_dict(orient='records')
+
+        # Convert intervals to start/end times
+        time_intervals = create_time_intervals(action_data_json, selected_day)
+
+        # Group split data based on intervals
+        grouped_data = group_split_data(df_splits, time_intervals)
+        split_data.append(grouped_data)
+
+        # Create annotations for grouped data
+        annotations = create_annotations(grouped_data, action_data_json, free_table, seq_key)
+        intersection_annotations.append({custom_id: annotations})
+
+        # Append data for response
+        action_data.append(action_data_json)
+        free_data.append(free_table.to_dict(orient='records'))
+
+    # Prepare response data
+    response_data = {
+        "action_data": action_data,
+        "free_data": free_data,
+        "split_data": split_data,
+        "Annotations": intersection_annotations
+    }
+
+    return Response(json.dumps(response_data, default=str), content_type='application/json')
+
 
 
 if __name__ == "__main__":

@@ -39,6 +39,7 @@
         const TTData = JSON.parse('{{ travel_run_data | safe }}');
         const CorridorData = JSON.parse('{{ corridor_data | safe }}');
         let split_data = null;
+        let Split_Annotations = null;
     </script>
 
     <script src="{{ url_for('static', filename='TT_chart.js') }}"></script>
@@ -47,12 +48,12 @@
         // Add event listener for phase selector
         document.getElementById("run-select").addEventListener("change", updateTravelTimeChart);
 
-        console.log(TTData, CorridorData);
+        //console.log(TTData, CorridorData);
 
         // Extract unique dates and times
         const timestamps = TTData.map(entry => new Date(entry.Timestamp));
         const uniqueDates = [...new Set(timestamps.map(ts => ts.toISOString().split('T')[0]))];
-        console.log(uniqueDates);
+
         // Initialize Flatpickr for date inputs
         const startDateInput = document.getElementById('start-date');
 
@@ -132,14 +133,11 @@
             .then(data => {
                 //console.log("Controller Data:", data);
                 split_data = data;
-                //free_data = data.free_data;
-                //action_data = data.action_data;
-                //Seq_Key = data.Seq_Key;
+                Split_Annotations = data.Annotations;
+
                 console.log(split_data);
-                //console.log(free_data);
-                //console.log(action_data);
-                //console.log(Seq_Key);
-                updateTravelTimeChart(); 
+
+                //updateTravelTimeChart(); 
                 
             })
             .catch(error => {
