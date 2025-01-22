@@ -4,7 +4,7 @@ from config import Mio_config
 from sqlalchemy import create_engine, text
 import math
 import numpy as np
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 def connect_to_db(server, database):
@@ -114,7 +114,7 @@ if __name__ == "__main__":
     database = Mio_config['database']
     table_name = "Travel_Time_Table_01" # Format Travel_Time_Table_{Corridor Number as defined in map}
 
-    file = './Database_Folders/Travel Runs/01_2024-07-16_080222_NY252_EB_4.csv'
+    file = './Run Times/2025-01-22_131520_NY252EB-2.csv'
     df = import_TT(file)
 
     #print(df,f"Total Distance: {df['distance_ft'].sum()}")
@@ -130,6 +130,9 @@ if __name__ == "__main__":
 
     # Apply the conversion function to the 'timestamp' column
     df_select['Timestamp'] = df_select['Time'].apply(iso_to_sql_datetime)
+    # Adjust the Timestamp column by subtracting 5 hours
+    df_select['Timestamp'] = pd.to_datetime(df_select['Timestamp']) - timedelta(hours=5)
+
     select = ["Timestamp", "Lat", "Lng"]
     df_select = df_select[select]
 
