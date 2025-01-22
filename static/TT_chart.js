@@ -2,26 +2,6 @@ const ctx = document.getElementById('timeSpaceChart').getContext('2d');
 
 let TTChart = null;
 
-// EXAMPLE Data: Intersections and Travel Times
-const signalTimings = {
-    "Intersection A": [
-        { start: "2025-01-13T08:00:00Z", end: "2025-01-13T08:10:00Z", color: 'green' },
-        { start: "2025-01-13T08:10:00Z", end: "2025-01-13T08:15:00Z", color: 'red' },
-    ],
-    "Intersection B": [
-        { start: "2025-01-13T08:05:00Z", end: "2025-01-13T08:15:00Z", color: 'green' },
-        { start: "2025-01-13T08:15:00Z", end: "2025-01-13T08:20:00Z", color: 'red' },
-    ],
-    "Intersection C": [
-        { start: "2025-01-13T08:20:00Z", end: "2025-01-13T08:30:00Z", color: 'green' },
-        { start: "2025-01-13T08:30:00Z", end: "2025-01-13T08:35:00Z", color: 'red' },
-    ],
-};
-
-
-
-
-
 // Convert data for Chart.js
 const intersectionData = CorridorData.map(intersection => ({
     x: null, // No specific timestamp for intersections
@@ -32,7 +12,7 @@ const intersectionData = CorridorData.map(intersection => ({
 
 
 function getRunData(selectedDate, selectedRunId) {
-    console.log(selectedDate, selectedRunId);
+    //console.log(selectedDate, selectedRunId);
     // Filter data by the selected date and runId
     const filteredData = TTData.filter(point => {
         const pointDate = point.Timestamp.split(' ')[0]; // Extract date from timestamp
@@ -92,86 +72,86 @@ function createHorizontalLines(data) {
 
 
 
-function prepareAnnotations(annotationsData) {
+// Function to prepare annotations for Chart.js
+function prepareAnnotations(intersectionsData) {
     const annotations = [];
 
-    annotationsData.forEach(line => {
-        Object.entries(line).forEach(([lineName, phases]) => {
-            phases.forEach(phaseData => {
-                Object.entries(phaseData).forEach(([phaseName, intervals]) => {
-                    intervals.forEach(interval => {
-                        annotations.push({
-                            type: 'box',
-                            xMin: new Date(interval.start).getTime(), // Start timestamp
-                            xMax: new Date(interval.end).getTime(),   // End timestamp
-                            yMin: lineName === 'Line_1' ? 0 : 1,      // Position for Line_1 or Line_2
-                            yMax: lineName === 'Line_1' ? 0.5 : 1.5,
-                            backgroundColor: getColor(interval.color), // Map color names to colors
-                            borderWidth: 0,
+    // Loop through each intersection
+    Object.entries(intersectionsData).forEach(([intId, intersection]) => {
+        const IntersectionDistance = CorridorData[intId].distance; // Assumes your annotations are grouped by intersectionId
+        //console.log(CorridorData[intId]);
+        Object.entries(intersection).forEach(group => {
+                if (group[1].length > 0){ //If there is split data
+                    Object.entries(group[1]).forEach(([cycleName, cycles]) => {
+
+                        Object.entries(cycles).forEach(cycle => {
+
+                            Object.entries(cycle[1]).forEach(phases => {
+
+                                Object.entries(phases[1]).forEach(phaseData => {
+                                        
+                                    Object.entries(phaseData[1]).forEach(([lineName, intervals]) => {
+        
+                                        intervals.forEach(interval => {
+
+                                            Object.entries(interval).forEach(splitTime =>{
+                                                
+                                                Object.entries(splitTime[1]).forEach(timeT =>{
+
+                                                    annotations.push({
+                                                        type: 'box',
+                                                        //label: `${CorridorData[intId].intersectionId}`,
+                                                        xMin: new Date(timeT[1].start).getTime(), // Start timestamp
+                                                        xMax: new Date(timeT[1].end).getTime(),   // End timestamp
+                                                        yMin: lineName === 'Line_1' ? (IntersectionDistance - 100) : IntersectionDistance,      // Position for Line_1 or Line_2
+                                                        yMax: lineName === 'Line_1' ? IntersectionDistance : (IntersectionDistance + 100),
+                                                        backgroundColor: getColor(timeT[1].color), // Map color names to colors
+                                                        borderWidth: 0,
+
+                                                    });
+                                                });
+                                            });
+                                        });
+                                    });
+                                });
+                            });
                         });
                     });
-                });
+                }
             });
-        });
     });
 
     return annotations;
 }
 
-// Map color names to RGBA values
-function getColor(color) {
-    const colorMap = {
-        Green: 'rgba(0, 255, 0, 0.3)',
-        Yel: 'rgba(255, 255, 0, 0.3)',
-        Red: 'rgba(255, 0, 0, 0.3)',
-        AllRed: 'rgba(255, 0, 255, 0.3)',
-    };
-
-    return colorMap[color] || 'rgba(200, 200, 200, 0.3)'; // Default to grey
-}
-
-
-
-/*
-// Create annotations for each interval
-const annotations = Split_Annotations.map((interval, index) => ({
-    type: 'box',
-    xMin: new Date(interval.start).getTime(),
-    xMax: new Date(interval.end).getTime(),
-    yMin: 0, // Adjust y-axis value for stacking or grouping
-    yMax: 1, // Adjust height of the box
-    backgroundColor: getColor(interval.color), // Function to map "Green", "Yel", "Red", "AllRed" to colors
-    borderColor: 'black',
-    borderWidth: 1,
-    label: {
-        content: `${interval.color}`,
-        enabled: true,
-        position: 'center',
-    },
-}));
-
-// Add annotations to the chart
-const annotationPlugin = {
-    annotations: annotations,
-};
-*/
-
 // Function to map interval colors to chart colors
 function getColor(color) {
     const colorMap = {
-        Green: 'rgba(0, 255, 0, 0.2)',
-        Yel: 'rgba(255, 255, 0, 0.2)',
-        Red: 'rgba(255, 0, 0, 0.2)',
-        AllRed: 'rgba(128, 0, 128, 0.2)',
+        Green: 'rgba(0, 255, 0, 0.7)',
+        Yel: 'rgba(255, 255, 0, 0.7)',
+        Red: 'rgba(255, 0, 0, 0.7)',
+        AllRed: 'rgba(128, 0, 53, 0.7)',
     };
-    return colorMap[color] || 'rgba(200, 200, 200, 0.2)';
+    return colorMap[color] || 'rgba(200, 200, 200, 0.7)';
 }
 
 
+function filterAnnotations(annotations, runStartTime, runEndTime) {
+    console.log(runStartTime, runEndTime);
+    return annotations.filter(annotation => 
+        annotation.xMin >= runStartTime && annotation.xMax <= runEndTime
+    );
+}
 
+// Function to get first and last timestamps
+function getFirstAndLastTimestamp(data) {
+    if (data.length === 0) return { firstTimestamp: null, lastTimestamp: null };
 
+    const firstTimestamp = data[0].x.getTime(); // Convert to timestamp (ms)
+    const lastTimestamp = data[data.length - 1].x.getTime(); // Convert to timestamp (ms)
 
-
+    return { firstTimestamp, lastTimestamp };
+}
 
 
 function updateTravelTimeChart(){
@@ -186,10 +166,11 @@ function updateTravelTimeChart(){
     // Prepare annotations for Chart.js
     const chartAnnotations = prepareAnnotations(Split_Annotations);
 
-    console.log(chartAnnotations)
-    
-    //const result = filterAnnotationsByTimestamp();
+    // Get first and last timestamps
+    const { firstTimestamp, lastTimestamp } = getFirstAndLastTimestamp(trajectoryData);
 
+    const filteredChartAnnotations = filterAnnotations(chartAnnotations, firstTimestamp - 120000, lastTimestamp + 120000);
+    console.log(filteredChartAnnotations);
 
     // Destroy the previous chart instance if it exists
     if (TTChart) {
@@ -216,7 +197,9 @@ function updateTravelTimeChart(){
         options: {
             responsive: true,
             plugins: {
-                annotation: chartAnnotations,
+                annotation: {
+                    annotations: filteredChartAnnotations,
+                },
                 legend: { position: 'top' },
                 zoom: {
                     pan: {

@@ -1067,8 +1067,8 @@ def travel_time_report():
 
 
 
-@app.route("/getSplitData_TT_old", methods=["POST"])
-def getSplitDataTT_old():
+@app.route("/getSplitData_TT", methods=["POST"])
+def getSplitDataTT():
     selected_day = request.json.get("selected_day", [])
     custom_id = request.json.get("corridor_id", [])
     corridor_list = request.json.get("corridor_data", [])
@@ -1165,7 +1165,31 @@ def getSplitDataTT_old():
 
                 for cycle in group:  # loop through each cycle - use current Seq_list
                     #for clr_id, color in enumerate(color_list):
-                    start = cycle["Timestamp"]
+                    
+                    if int(Coord_Phase) == 2: 
+                        Split1 = int(cycle[f"SP{Seq_list[0][0]}_split"]) 
+                        Split2 = int(cycle[f"SP{Seq_list[0][1]}_split"]) 
+                        if Split2 > 0:
+                            Yel2 = int(free_table["Yel"][int(Seq_list[0][1]) - 1])
+                            Red2 = int(free_table["Red"][int(Seq_list[0][1]) - 1])
+                            EOG_seconds = Split1 + (Split2 - (Yel2 + Red2))
+                        else:
+                            EOG_seconds = Split1
+                    elif int(Coord_Phase) == 6: 
+                        Split1 = int(cycle[f"SP{Seq_list[1][0]}_split"]) 
+                        Split2 = int(cycle[f"SP{Seq_list[1][1]}_split"]) 
+                        if Split2 > 0:
+                            Yel2 = int(free_table["Yel"][int(Seq_list[1][1]) - 1])
+                            Red2 = int(free_table["Red"][int(Seq_list[1][1]) - 1])
+                            EOG_seconds = Split1 + (Split2 - (Yel2 + Red2))
+                        else:
+                            EOG_seconds = Split1
+                    else:
+                        print("EOG not found")
+
+                    shiftEOG = pd.Timedelta(seconds=EOG_seconds)
+
+                    start = cycle["Timestamp"] - shiftEOG
                     
                     
                     for ph_id, phase in enumerate(Seq_list[0]):
@@ -1215,7 +1239,7 @@ def getSplitDataTT_old():
 
                     Line_Annotations.append({"Line_1": Phase_Annotations})
                     Phase_Annotations = []
-                    start = cycle["Timestamp"]
+                    start = cycle["Timestamp"] - shiftEOG
 
                     for ph_id, phase in enumerate(Seq_list[1]):
                         if cycle[f"SP{phase}_split"] is not None:
@@ -1314,8 +1338,8 @@ def getSplitDataTT_old():
 
 
 # Refactored function
-@app.route("/getSplitData_TT", methods=["POST"])
-def getSplitDataTT():
+@app.route("/getSplitData_TT_old", methods=["POST"])
+def getSplitDataTT_old():
     selected_day = request.json.get("selected_day", [])
     corridor_list = request.json.get("corridor_data", [])
 
