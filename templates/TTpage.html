@@ -10,7 +10,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
 
-    
+    <!-- Include Patternomaly -->
+    <script src="https://cdn.jsdelivr.net/npm/patternomaly"></script>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     
@@ -31,6 +32,7 @@
     <!-- Chart container -->
     <div id="charts-container">
         <canvas id="timeSpaceChart"></canvas>
+        <div id="travelMetricsTable" style="margin-top: 20px;"></div>
     </div>
     
 
@@ -135,7 +137,7 @@
                 split_data = data;
                 Split_Annotations = data.Annotations;
 
-                console.log(split_data);
+                //console.log(split_data);
 
                 //updateTravelTimeChart(); 
                 

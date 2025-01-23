@@ -354,8 +354,8 @@ def create_folium_map(mio_locations, other_locations ,output_file="map.html"):
 
     # Add markers for each location
     for location in mio_locations:
-        details_url = f"http://10.4.10.179:5000/intersection/{location['name']}/{location['id']}"
-        split_url = f"http://10.4.10.179:5000/split_monitor/{location['name']}/{location['customId']}"
+        details_url = f"http://127.0.0.1:5000/intersection/{location['name']}/{location['id']}"
+        split_url = f"http://127.0.0.1:5000/split_monitor/{location['name']}/{location['customId']}"
         #popup_html = f"<b>{location['name']}</b><br>ID: {location['id']}<br><a href='{details_url}' target='_blank'>View TMC Data</a>"
         popup_html = (
             f"<b>{location['name']}</b><br>ID: {location['id']}<br>"
@@ -374,7 +374,7 @@ def create_folium_map(mio_locations, other_locations ,output_file="map.html"):
 
     # Add red markers for Non-Miovision locations
     for loc in other_locations:
-        split_url_nonMio = f"http://10.4.10.179:5000/split_monitor/{loc['name']}/{loc['name']}"
+        split_url_nonMio = f"http://127.0.0.1:5000/split_monitor/{loc['name']}/{loc['name']}"
         popup_html_nonMio = (
             f"<b>{loc['name']}</b><br>Main Route: {loc['main_route']}<br>Intersect Route: {loc['intersect_route']}"
             f"""<br><button onclick="toggleSelection({loc['latitude']}, {loc['longitude']}, '{loc['name']}')">
@@ -1164,21 +1164,21 @@ def getSplitDataTT():
                 # Create Annotation list
                 color_list = ["Green", "Green_left", "Yellow", "Red"]
 
-                for cycle_id, cycle in enumerate(group):  # loop through each cycle - use current Seq_list
+                for cycle in group:  # loop through each cycle - use current Seq_list
                     #for clr_id, color in enumerate(color_list):
-
-                    if int(Coord_Phase) == 2:
-                        Split1 = int(cycle[f"SP{Seq_list[0][0]}_split"])
-                        Split2 = int(cycle[f"SP{Seq_list[0][1]}_split"])
+                    
+                    if int(Coord_Phase) == 2: 
+                        Split1 = int(cycle[f"SP{Seq_list[0][0]}_split"]) 
+                        Split2 = int(cycle[f"SP{Seq_list[0][1]}_split"]) 
                         if Split2 > 0:
                             Yel2 = int(free_table["Yel"][int(Seq_list[0][1]) - 1])
                             Red2 = int(free_table["Red"][int(Seq_list[0][1]) - 1])
                             EOG_seconds = Split1 + (Split2 - (Yel2 + Red2))
                         else:
                             EOG_seconds = Split1
-                    elif int(Coord_Phase) == 6:
-                        Split1 = int(cycle[f"SP{Seq_list[1][0]}_split"])
-                        Split2 = int(cycle[f"SP{Seq_list[1][1]}_split"])
+                    elif int(Coord_Phase) == 6: 
+                        Split1 = int(cycle[f"SP{Seq_list[1][0]}_split"]) 
+                        Split2 = int(cycle[f"SP{Seq_list[1][1]}_split"]) 
                         if Split2 > 0:
                             Yel2 = int(free_table["Yel"][int(Seq_list[1][1]) - 1])
                             Red2 = int(free_table["Red"][int(Seq_list[1][1]) - 1])
@@ -1189,10 +1189,10 @@ def getSplitDataTT():
                         print("EOG not found")
 
                     shiftEOG = pd.Timedelta(seconds=abs(EOG_seconds))
-                    print(shiftEOG, abs(EOG_seconds))
+
                     start = cycle["Timestamp"] - shiftEOG
-
-
+                    
+                    
                     for ph_id, phase in enumerate(Seq_list[0]):
                         if cycle[f"SP{phase}_split"] is not None:
 
@@ -1210,9 +1210,14 @@ def getSplitDataTT():
                                     Yel_end = start + pd.Timedelta(seconds=Ysec) 
                                     Red_end = start + pd.Timedelta(seconds=Rsec)
 
-                                    Green_Annotation = {"start": start,
-                                                        "end": end,
-                                                        "color": "Green"}
+                                    if phase == 1: #Lefts
+                                        Green_Annotation = {"start": start,
+                                                            "end": end,
+                                                            "color": "GreenUp"}
+                                    else:
+                                        Green_Annotation = {"start": start,
+                                                            "end": end,
+                                                            "color": "Green"}
                                     Yellow_Annotation = {"start": end,
                                                         "end": Yel_end,
                                                         "color": "Yel"}
@@ -1259,9 +1264,14 @@ def getSplitDataTT():
                                     Yel_end = start + pd.Timedelta(seconds=Ysec) 
                                     Red_end = start + pd.Timedelta(seconds=Rsec)
 
-                                    Green_Annotation = {"start": start,
-                                                        "end": end,
-                                                        "color": "Green"}
+                                    if phase == 5: #Lefts
+                                        Green_Annotation = {"start": start,
+                                                            "end": end,
+                                                            "color": "GreenDwn"}
+                                    else:
+                                        Green_Annotation = {"start": start,
+                                                            "end": end,
+                                                            "color": "Green"}
                                     Yellow_Annotation = {"start": end,
                                                         "end": Yel_end,
                                                         "color": "Yel"}
@@ -1393,10 +1403,11 @@ def getSplitDataTT_old():
     return Response(json.dumps(response_data, default=str), content_type='application/json')
 
 
+
 if __name__ == "__main__":
     if not os.path.exists("map.html"):
         mio_locations, other_locations = fetch_locations_from_db()
         create_folium_map(mio_locations, other_locations)
     #locations, other_locations = fetch_locations_from_db()
     #print(locations, other_locations)
-    app.run(host='10.4.10.179', port=5000, debug=True)
+    app.run(debug=True)
