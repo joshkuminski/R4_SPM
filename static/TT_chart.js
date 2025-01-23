@@ -33,7 +33,7 @@ function getRunData(selectedDate, selectedRunId) {
 // Map distances to intersection IDs for the y-axis
 const yTicks = CorridorData.map(intersection => ({
     value: intersection.distance,
-    label: `${intersection.intersectionId} (${intersection.distance.toFixed(0)} ft)`,
+    label: `${intersection.name} (${intersection.distance.toFixed(0)} ft)`,
 }));
 
 
@@ -50,7 +50,8 @@ function createHorizontalLines(data) {
 
     // Map horizontal lines for each intersection
     const horizontalLines = CorridorData.map(intersection => ({
-        label: `Line at ${intersection.intersectionId}`,
+        //label: `Line at ${intersection.name}`,
+        label: '',
         data: [
             { x: firstTimestamp, y: intersection.distance}, // Start of line
             { x: lastTimestamp, y: intersection.distance },  // End of line
@@ -62,6 +63,7 @@ function createHorizontalLines(data) {
     }));
 
     return horizontalLines;
+
 }
 
 
@@ -73,7 +75,7 @@ function prepareAnnotations(intersectionsData) {
     // Loop through each intersection
     Object.entries(intersectionsData).forEach(([intId, intersection]) => {
         const IntersectionDistance = CorridorData[intId].distance; // Assumes your annotations are grouped by intersectionId
-        const IntersectionLabel = CorridorData[intId].intersectionId;
+        const IntersectionLabel = CorridorData[intId].name;
 
         Object.entries(intersection).forEach(group => {
                 if (group[1].length > 0){ //If there is split data
@@ -139,9 +141,9 @@ const diagonalStripePattern2 = pattern.draw('diagonal-right-left', {
 // Function to map interval colors to chart colors
 function getColor(color) {
     const colorMap = {
-        Green: 'rgba(0, 255, 0, 0.75)',
-        Yel: 'rgba(255, 255, 0, 0.75)',
-        Red: 'rgba(255, 0, 0, 0.75)',
+        Green: 'rgba(0, 255, 0, 0.65)',
+        Yel: 'rgba(255, 255, 0, 0.65)',
+        Red: 'rgba(255, 0, 0, 0.65)',
         AllRed: 'rgba(100, 5, 45, 0.75)',
         GreenUp: diagonalStripePattern1,
         GreenDwn: diagonalStripePattern2,
@@ -151,11 +153,11 @@ function getColor(color) {
 
 
 function filterAnnotations(annotations, runStartTime, runEndTime) {
-    //console.log(runStartTime, runEndTime);
     return annotations.filter(annotation => 
         annotation.xMin >= runStartTime && annotation.xMax <= runEndTime
     );
 }
+
 
 // Function to get first and last timestamps
 function getFirstAndLastTimestamp(data) {
@@ -244,8 +246,7 @@ function generateTrajectorySegments(trajectoryData) {
         }else{
             speedMph = 0;
         }
-        //console.log(speedMph);
-
+ 
         // Determine color based on speed
         let color;
         if (speedMph <= slowThreshold) {
@@ -261,11 +262,11 @@ function generateTrajectorySegments(trajectoryData) {
             label: '',
             data: [prev, curr], // Segment start and end points
             borderColor: color,
-            borderWidth: 2,
+            borderWidth: 3,
             showLine: true,
             pointRadius: 0, // No points, just a line
             fill: false,
-            z: 1,
+           
         });
     }
 
@@ -277,18 +278,21 @@ function generateTrajectorySegments(trajectoryData) {
 function calculateMetrics(corridorData, trajectoryData) {
     const metrics = [];
     let totalTravelTime = 0;
+    let freeFlowTime = 0;
+    // Calculate the total distance
+    const totalDistance = corridorData[corridorData.length - 1].distance - corridorData[0].distance;
 
     for (let i = 0; i < corridorData.length - 1; i++) {
         const startIntersection = corridorData[i];
         const endIntersection = corridorData[i + 1];
-
+        
         let segmentData;
         if (i == (corridorData.length - 2)){
             // Filter trajectory data between the two intersections
             segmentData = trajectoryData.filter(point =>
                 point.y >= startIntersection.distance  && point.y <= (endIntersection.distance + 300)
             );
-            console.log(endIntersection.distance, endIntersection.distance + 600);
+            //console.log(endIntersection.distance, endIntersection.distance + 600);
         }else if(i == 0){
             segmentData = trajectoryData.filter(point =>
                 point.y >= (startIntersection.distance - 300) && point.y <= endIntersection.distance
@@ -304,9 +308,9 @@ function calculateMetrics(corridorData, trajectoryData) {
         const endTime = new Date(segmentData[segmentData.length - 1].x);
 
         const travelTime = (endTime - startTime) / 1000 ; // Travel time in seconds
-        //console.log(travelTime);
+     
         const distance = endIntersection.distance - startIntersection.distance; // Distance in feet
-        //console.log(distance);
+   
         const avgSpeed = (distance / travelTime ) * 0.6818; // Average speed in mph
 
         metrics.push({
@@ -314,17 +318,34 @@ function calculateMetrics(corridorData, trajectoryData) {
             endIntersection: endIntersection.intersectionId,
             avgSpeed: avgSpeed.toFixed(2),
             travelTime: travelTime.toFixed(2),
+            startName: startIntersection.name,
+            endName: endIntersection.name,
+            delay: null, //placeholder
         });
 
         totalTravelTime += travelTime;
     }
 
-    return { metrics, totalTravelTime: totalTravelTime.toFixed(2) };
+    // Find the maximum average speed - Estimate based on the Max Avg Speed - 5mph
+    const maxAvgSpeed = (Math.max(...metrics.map(metric => parseFloat(metric.avgSpeed)))) - 5;
+
+    // Calculate free flow travel time 
+    freeFlowTime = maxAvgSpeed > 0 ? totalDistance / (maxAvgSpeed / 0.6818) : null;
+
+    // Add delay to each metric
+    metrics.forEach(metric => {
+        const distance = corridorData.find(intersection => intersection.intersectionId === metric.endIntersection).distance - 
+                         corridorData.find(intersection => intersection.intersectionId === metric.startIntersection).distance;
+        metric.delay = maxAvgSpeed > 0 ? (metric.travelTime - ((distance / (maxAvgSpeed / 0.6818) ).toFixed(2))).toFixed(2) : "N/A";
+    });
+
+    return { metrics, totalTravelTime: totalTravelTime.toFixed(2),
+        freeFlowTime: freeFlowTime ? freeFlowTime.toFixed(2) : "N/A"};
 }
 
 
 // Generate Table
-function generateTable(metrics, totalTravelTime) {
+function generateTable(metrics, totalTravelTime, freeFlowTime) {
     let tableHTML = `
         <table border="1" style="width: 100%; text-align: center; border-collapse: collapse;">
             <thead>
@@ -333,6 +354,7 @@ function generateTable(metrics, totalTravelTime) {
                     <th>End Intersection</th>
                     <th>Average Speed (mph)</th>
                     <th>Travel Time (sec)</th>
+                    <th>Est. Delay (sec)</th>
                 </tr>
             </thead>
             <tbody>
@@ -341,10 +363,11 @@ function generateTable(metrics, totalTravelTime) {
     metrics.forEach(row => {
         tableHTML += `
             <tr>
-                <td>${row.startIntersection}</td>
-                <td>${row.endIntersection}</td>
+                <td>${row.startIntersection} - ${row.startName}</td>
+                <td>${row.endIntersection} - ${row.endName}</td>
                 <td>${row.avgSpeed}</td>
                 <td>${row.travelTime}</td>
+                <td>${row.delay}</td>
             </tr>
         `;
     });
@@ -354,13 +377,43 @@ function generateTable(metrics, totalTravelTime) {
             <tfoot>
                 <tr>
                     <td colspan="3"><strong>Total Travel Time</strong></td>
-                    <td><strong>${totalTravelTime} sec</strong></td>
+                    <td><strong>${totalTravelTime} sec // ${Math.trunc(totalTravelTime / 60)}min${Math.floor((totalTravelTime % 60))}sec</strong></td>
+                    <td rowspan="2"><strong>${(totalTravelTime - freeFlowTime).toFixed(2)} sec</strong></td>
+                </tr>
+                <tr>
+                    <td colspan="3"><strong>Est. Free Flow Time</strong></td>
+                    <td><strong>${freeFlowTime} sec // ${Math.trunc(freeFlowTime / 60)}min${Math.floor((freeFlowTime % 60))}sec</strong></td>
                 </tr>
             </tfoot>
         </table>
     `;
 
     return tableHTML;
+}
+
+
+
+// Function to create a gradient based on speed
+function createSpeedGradient(ctx, chartArea, speeds) {
+    const gradient = ctx.createLinearGradient(chartArea.left, 0, chartArea.right, 0);
+
+    // Determine color stops based on speed thresholds
+    speeds.forEach((speed, index) => {
+        const stopPosition = index / (speeds.length - 1); // Normalize position between 0 and 1
+        let color;
+
+        if (speed < 10) {
+            color = "blue"; // Slow speed
+        } else if (speed < 20) {
+            color = "green"; // Medium speed
+        } else {
+            color = "red"; // High speed
+        }
+
+        gradient.addColorStop(stopPosition, color);
+    });
+
+    return gradient;
 }
 
 
@@ -372,17 +425,15 @@ function updateTravelTimeChart(){
     const trajectoryData = getRunData(selectedDate, parseInt(selectedRun));
 
     const AveSpeed = calculateAverageSpeed(trajectoryData, CorridorData);
-    console.log(AveSpeed);
+    //console.log(AveSpeed);
     //const trajectoryDataset = generateTrajectoryDataset(trajectoryData);
     // Generate datasets for each segment
     const trajectorySegments = generateTrajectorySegments(trajectoryData);
 
-    const IntersectionLines = createHorizontalLines(trajectoryData);
-    
     // Render Table Below the Chart
     function renderTable() {
-        const { metrics, totalTravelTime } = calculateMetrics(CorridorData, trajectoryData);
-        const tableHTML = generateTable(metrics, totalTravelTime);
+        const { metrics, totalTravelTime, freeFlowTime } = calculateMetrics(CorridorData, trajectoryData);
+        const tableHTML = generateTable(metrics, totalTravelTime, freeFlowTime);
         document.getElementById('travelMetricsTable').innerHTML = tableHTML;
     }
 
@@ -391,11 +442,48 @@ function updateTravelTimeChart(){
     // Prepare annotations for Chart.js
     const chartAnnotations = prepareAnnotations(Split_Annotations);
 
+
     // Get first and last timestamps
     const { firstTimestamp, lastTimestamp } = getFirstAndLastTimestamp(trajectoryData);
 
-    const filteredChartAnnotations = filterAnnotations(chartAnnotations, firstTimestamp - 120000, lastTimestamp + 120000);
+    const filteredChartAnnotations = filterAnnotations(chartAnnotations, firstTimestamp - 60000, lastTimestamp + 60000);
 
+    const IntersectionLines = createHorizontalLines(trajectoryData);
+
+    pointColors = [
+        '#DF00FF', // Vibrant Orange-Red
+        '#0D9494', // Vibrant Green
+        '#4D5D53', // Vibrant Blue
+        '#801818', // Bright Yellow
+        '#4A9976', // Vibrant Pink
+        '#E48400', // Aqua
+        '#8B5959', // Warm Orange
+        '#9633FF', // Purple
+        '#007474', // Light Green
+        '#645452', // Lime Green
+        '#FF5733', // Coral
+        '#FF33A1', // Hot Pink
+        '#000100', // Lime-Yellow
+        '#5733FF', // Deep Purple
+        '#33A1FF', // Sky Blue
+        '#FF3385', // Rose
+        '#85FF33', // Light Lime
+        '#3385FF', // Royal Blue
+        '#FF8333', // Soft Orange
+        '#33FF83'  // Mint Green
+    ];
+    const pointData = CorridorData.map((intersection, index ) => ({
+        label: intersection.name,
+        data: [{ x: firstTimestamp - 60000, y: intersection.distance }],
+        backgroundColor: pointColors[index % pointColors.length],
+        borderColor: pointColors[index % pointColors.length],
+        pointRadius: 6,
+        pointHoverRadius: 8,
+    }));
+
+
+    const annotations = [...filteredChartAnnotations];
+    const data = [...trajectorySegments, ...IntersectionLines, ...pointData];
 
     // Destroy the previous chart instance if it exists
     if (TTChart) {
@@ -404,18 +492,15 @@ function updateTravelTimeChart(){
 
     // Initialize the chart
     TTChart = new Chart(ctx, {
-        type: 'scatter',
+        type: 'line',
         data: {
-            datasets: [
-                ...trajectorySegments,
-                ...IntersectionLines,
-            ],
+            datasets: data,
         },
         options: {
             responsive: true,
             plugins: {
                 annotation: {
-                    annotations: filteredChartAnnotations,
+                    annotations: annotations,
                 },
                 pattern, //pattern plugin
                 legend: {
@@ -424,6 +509,8 @@ function updateTravelTimeChart(){
                             // Exclude datasets with empty labels
                             return legendItem.text && legendItem.text.trim() !== '';
                         },
+                        color:'#4BCCB7',
+                        font: {size: 18},
                     },
                 },        
                 zoom: {
@@ -441,7 +528,7 @@ function updateTravelTimeChart(){
                         drag: {
                             enabled: false, // Enable zooming by dragging a rectangle
                         },
-                        mode: 'x', // Allow zooming in both x and y axes
+                        mode: 'xy', // Allow zooming in both x and y axes
                     },
                 },
             },
@@ -449,20 +536,26 @@ function updateTravelTimeChart(){
             scales: {
                 x: {
                     type: 'time',
+                    ticks: {
+                        color: '#4BCCB7', 
+                        font: {size: 14},
+                    },
                     time: {
                         unit: 'second',
                         displayFormats: { second: 'HH:mm:ss' },
                     },
-                    title: { display: true, text: 'Time (HH:mm:ss)' },
+                    title: { display: true, text: 'Time (HH:mm:ss)', font: {size: 18}, color:'#4BCCB7' },
                 },
                 y: {
                     type: 'linear',
-                    title: { display: true, text: 'Distance (feet)' },
+                    title: { display: true, text: 'Distance (feet)', font: {size: 18}, color:'#4BCCB7' },
                     ticks: {
                         callback: (value) => {
                             const tick = yTicks.find(t => t.value === value);
                             return tick ? tick.label : `${value.toFixed(0)} ft`;
                         },
+                        color: '#4BCCB7', 
+                        font: {size: 14},
                         autoSkip: false, // Ensure all ticks are shown
                         stepSize: null,  // Dynamically align ticks
                     },
