@@ -19,7 +19,8 @@ from sqlalchemy import create_engine
 import math
 import numpy as np
 from haversine import haversine, Unit
-from UtilityFunctions import create_time_intervals, group_split_data, create_annotations
+from UtilityFunctions import calculate_destination_point
+
 
 app = Flask(__name__)
 
@@ -587,7 +588,7 @@ def getCorridorList(corridor_id, conn):
     cursor.execute(query)
     data = cursor.fetchall()
 
-    column_names = ["corridorId", "corridorName", "latitude", "longitude", "intersectionId"]
+    column_names = ["corridorId", "corridorName", "latitude", "longitude", "intersectionId", "name"]
 
     # Convert tuples to dictionaries - using column name
     corridor_table = [dict(zip(column_names, row)) for row in data]
@@ -1022,7 +1023,6 @@ def add_corridor():
         return json.dumps({"error": str(e)}, default=str)
 
 
-
 @app.route("/travel_time_report")
 def travel_time_report():
     server = Mio_config['server']
@@ -1036,6 +1036,11 @@ def travel_time_report():
 
     # Assuming df_cor is your DataFrame and it has 'latitude' and 'longitude' columns
     first_lat, first_lon = df_cor.iloc[0]['latitude'], df_cor.iloc[0]['longitude']
+    last_lat, last_lon = df_cor.iloc[-1]['latitude'], df_cor.iloc[-1]['longitude']
+
+    distance_ft = -1000
+    new_lat, new_lon = calculate_destination_point(first_lat, first_lon , last_lat, last_lon, distance_ft)
+
 
     df_cor['distance'] = df_cor.apply(
         lambda row: haversine(
@@ -1049,14 +1054,24 @@ def travel_time_report():
     # SAme to the Travel Time Data
     df_tt['distance'] = df_tt.apply(
         lambda row: haversine(
-            (first_lat, first_lon),
+            (new_lat, new_lon),
             (row['latitude'], row['longitude']),
             unit=Unit.METERS  # You can change this to METERS if needed
         ) * 3.28084,
         axis=1
     )
 
-    #print(df_cor, df_tt)
+    # Add back the 1000' to the TT data
+    df_tt['distance'] = df_tt['distance'] - 1000
+
+    # CALCULATE INSTANTANEOUS SPEED
+    df_tt['time_diff'] = df_tt['Timestamp'].diff().dt.total_seconds()
+    df_tt['distance_diff'] = df_tt['distance'].diff()
+    df_tt['speed_mph'] = abs((df_tt['distance_diff'] / df_tt['time_diff']) * 0.6818)
+    df_tt['speed_mph'] = df_tt['speed_mph'].fillna(0)
+
+    df_tt.drop(columns=['distance_diff', 'time_diff'], inplace=True)
+
     corridor_data_json = df_cor.to_dict(orient='records')
     travelRun_data_json = df_tt.to_dict(orient='records')
 
