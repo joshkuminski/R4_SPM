@@ -27,7 +27,7 @@
             justify-content: space-around;
         }
         #timeSpaceChart {
-            background-color: rgb(94, 130, 146);
+            background-color: rgb(244, 245, 247);
         }
         canvas {
             max-width: 85%;
@@ -66,6 +66,7 @@
     </div>
 
     <div id="charts-container">
+        <canvas id="timeSpeedChart"></canvas>
         <div id="travelMetricsTable" style="margin-top: 20px;"></div>
     </div>
 
@@ -73,7 +74,7 @@
         //Dataset from Flask
         const TTData = JSON.parse('{{ travel_run_data | safe }}');
         const CorridorData = JSON.parse('{{ corridor_data | safe }}');
-        console.log(CorridorData);
+        //console.log(CorridorData);
         let split_data = null;
         let Split_Annotations = null;
     </script>
@@ -83,6 +84,7 @@
     <script>
         // Add event listener for phase selector
         document.getElementById("run-select").addEventListener("change", updateTravelTimeChart);
+        document.getElementById("run-select").addEventListener("change", updateSpeedChart);
 
         // Extract unique dates and times
         const timestamps = TTData.map(entry => new Date(entry.Timestamp));
@@ -181,6 +183,7 @@
         });
     </script>
     
+    <script src="{{ url_for('static', filename='export_time-space_chart.js') }}"></script>
 
 </body>
 </html>

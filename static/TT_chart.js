@@ -1,6 +1,8 @@
 const ctx = document.getElementById('timeSpaceChart').getContext('2d');
+const ctx_2 = document.getElementById('timeSpeedChart').getContext('2d');
 
 let TTChart = null;
+let SpeedChart = null;
 
 // Convert data for Chart.js
 const intersectionData = CorridorData.map(intersection => ({
@@ -225,7 +227,14 @@ function generateTrajectorySegments(trajectoryData) {
         medium: "yellow",
         fast: "blue",
     };
-
+    const Utils = {
+        CHART_COLORS: {
+          red: 'rgba(255, 99, 132, 1)',
+          yellow: 'rgba(255, 206, 86, 1)',
+          blue: 'rgba(54, 162, 235, 1)',
+          dblue: 'rgb(38, 106, 151)',
+        }
+      };
     // Define speed thresholds
     const slowThreshold = 15; // Speed below this is "slow"
     const fastThreshold = 30; // Speed above this is "fast"
@@ -250,11 +259,11 @@ function generateTrajectorySegments(trajectoryData) {
         // Determine color based on speed
         let color;
         if (speedMph <= slowThreshold) {
-            color = colors.slow;
+            color = Utils.CHART_COLORS.red;
         } else if (speedMph > slowThreshold && speedMph <= fastThreshold) {
-            color = colors.medium;
+            color = Utils.CHART_COLORS.yellow;
         } else {
-            color = colors.fast;
+            color = Utils.CHART_COLORS.dblue;
         }
 
         // Create a segment
@@ -416,6 +425,7 @@ function createSpeedGradient(ctx, chartArea, speeds) {
     return gradient;
 }
 
+let IntersectionLines = [];
 
 function updateTravelTimeChart(){
     const selectedDate = document.getElementById('start-date').value; // Format: 'YYYY-MM-DD'
@@ -448,7 +458,7 @@ function updateTravelTimeChart(){
 
     const filteredChartAnnotations = filterAnnotations(chartAnnotations, firstTimestamp - 60000, lastTimestamp + 60000);
 
-    const IntersectionLines = createHorizontalLines(trajectoryData);
+    IntersectionLines = createHorizontalLines(trajectoryData);
 
     pointColors = [
         '#DF00FF', // Vibrant Orange-Red
@@ -567,5 +577,227 @@ function updateTravelTimeChart(){
 
 // Initial chart rendering
 updateTravelTimeChart();
-// Call the renderTable function
 
+
+function getSpeedData(selectedDate, selectedRunId) {
+    //console.log(selectedDate, selectedRunId);
+    // Filter data by the selected date and runId
+    const filteredData = TTData.filter(point => {
+        const pointDate = point.Timestamp.split(' ')[0]; // Extract date from timestamp
+        return pointDate === selectedDate && point.runId === selectedRunId;
+    });
+
+    // Map the filtered data to the desired format
+    const formattedData = filteredData.map(point => ({
+        x: new Date(point.Timestamp),
+        y: point.speed_mph,
+        y2: point.distance,
+    }));
+
+    return formattedData;
+}
+
+// Function to find intersection times
+function getIntersectionTimes(trajectoryData, intersectionData) {
+    const intersectionTimes = [];
+
+    intersectionData.forEach((intersection) => {
+        for (let i = 1; i < trajectoryData.length; i++) {
+            const prevPoint = trajectoryData[i - 1];
+            const currentPoint = trajectoryData[i];
+            //console.log(currentPoint);
+            // Check if the trajectory crosses the intersection distance
+            if (
+                (prevPoint.y2 <= intersection.data[0].y && currentPoint.y2 >= intersection.data[0].y) ||
+                (prevPoint.y2 >= intersection.data[0].y && currentPoint.y2 <= intersection.data[0].y)
+            ) {
+                // Interpolate the time of intersection
+                const timeDiff =
+                    new Date(currentPoint.x) - new Date(prevPoint.x);
+                const distanceDiff =
+                    currentPoint.y2 - prevPoint.y2;
+                const ratio =
+                    (intersection.data[0].y - prevPoint.y2) / distanceDiff;
+                const intersectionTime = new Date(
+                    new Date(prevPoint.x).getTime() + ratio * timeDiff
+                );
+
+                intersectionTimes.push({
+                    //name: intersection.name,
+                    time: intersectionTime,
+                });
+
+                break; // Found the intersection for this point
+            }
+        }
+    });
+
+    return intersectionTimes;
+}
+
+
+
+
+// SPEED OVER TIME CHART
+function updateSpeedChart(){
+    const selectedDate = document.getElementById('start-date').value; // Format: 'YYYY-MM-DD'
+    const selectedRun = document.getElementById("run-select").value;
+
+    // Get filtered data for the selected date and run
+    const trajectoryData = getSpeedData(selectedDate, parseInt(selectedRun));
+
+    // Get intersection times
+    const intersectionTimes = getIntersectionTimes(
+        trajectoryData,
+        IntersectionLines
+    );
+
+    // Chart.js annotation plugin for vertical lines
+    const annotations = intersectionTimes.map((intersection, index) => ({
+        type: 'line',
+        xMin: intersection.time.getTime(),
+        xMax: intersection.time.getTime(),
+        borderColor: 'red',
+        borderWidth: 1,
+        label: {
+            content: CorridorData[index].name, 
+            enabled: true,
+            position: 'start',
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            color: 'white',
+            font: {
+                size: 12,
+                weight: 'bold',
+            },
+        },
+        padding: 5,
+    }));
+
+
+    const Utils = {
+        CHART_COLORS: {
+          red: 'rgba(255, 99, 132, 1)',
+          yellow: 'rgba(255, 206, 86, 1)',
+          blue: 'rgba(54, 162, 235, 1)',
+          dblue: 'rgb(38, 106, 151)',
+        }
+      };
+
+    let width, height, gradient;
+    function getGradient(ctx, chartArea) {
+    const chartWidth = chartArea.right - chartArea.left;
+    const chartHeight = chartArea.bottom - chartArea.top;
+    if (!gradient || width !== chartWidth || height !== chartHeight) {
+        // Create the gradient because this is either the first render
+        // or the size of the chart has changed
+        width = chartWidth;
+        height = chartHeight;
+        gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+        gradient.addColorStop(1, Utils.CHART_COLORS.dblue);
+        gradient.addColorStop(0.5, Utils.CHART_COLORS.blue);
+        gradient.addColorStop(0.25, Utils.CHART_COLORS.yellow);
+        gradient.addColorStop(0, Utils.CHART_COLORS.red);
+    }
+
+    return gradient;
+    }
+
+
+    // Destroy the previous chart instance if it exists
+    if (SpeedChart) {
+        SpeedChart.destroy();
+    }
+
+    const data = [...trajectoryData];
+    // Initialize the chart
+    SpeedChart = new Chart(ctx_2, {
+        type: 'line',
+        data: {
+            datasets: [{
+                data: data.map(entry => ({
+                    x: entry.x,
+                    y: entry.y
+                })),
+                type: 'line',
+                borderColor: function(context) {
+                    const chart = context.chart;
+                    const {ctx, chartArea} = chart;
+            
+                    if (!chartArea) {
+                      // This case happens on initial chart load
+                      return;
+                    }
+                    return getGradient(ctx, chartArea);
+                  },
+                borderWidth: 2,
+                pointRadius: 0,
+                tension: 0.4,
+                fill: false,
+            }],
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                annotation: {
+                    annotations: annotations,
+                },
+                legend: {
+                    labels: {
+                        filter: (legendItem) => {
+                            // Exclude datasets with empty labels
+                            return legendItem.text && legendItem.text.trim() !== '';
+                        },
+                        color:'#4BCCB7',
+                        font: {size: 18},
+                    },
+                },        
+                zoom: {
+                    pan: {
+                        enabled: true,
+                        mode: 'x', // Allow panning in the x-axis direction
+                    },
+                    zoom: {
+                        wheel: {
+                            enabled: true, // Enable zooming with the mouse wheel
+                        },
+                        pinch: {
+                            enabled: true, // Enable zooming with pinch gestures
+                        },
+                        drag: {
+                            enabled: false, // Enable zooming by dragging a rectangle
+                        },
+                        mode: 'xy', // Allow zooming in both x and y axes
+                    },
+                },
+            },
+            
+            scales: {
+                x: {
+                    type: 'time',
+                    ticks: {
+                        color: '#4BCCB7', 
+                        font: {size: 14},
+                    },
+                    time: {
+                        unit: 'second',
+                        displayFormats: { second: 'HH:mm:ss' },
+                    },
+                    title: { display: true, text: 'Time (HH:mm:ss)', font: {size: 18}, color:'#4BCCB7' },
+                },
+                y: {
+                    type: 'linear',
+                    title: { display: true, text: 'Speed (mph)', font: {size: 18}, color:'#4BCCB7' },
+                    display: true,
+                    ticks: {
+                        color: '#4BCCB7', 
+                        font: {size: 14},
+                    },
+                },
+            },
+        },
+    });
+}
+
+
+// Initial chart rendering
+updateSpeedChart();
