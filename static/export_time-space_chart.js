@@ -38,6 +38,10 @@ document.getElementById("export-chart-btn").addEventListener("click", () => {
     exportChartImage(TTChart);
 });
 
+document.getElementById("export-Speedchart-btn").addEventListener("click", () => {
+    exportChartImage(SpeedChart);
+});
+
 /*
 document.getElementById("export-data-btn").addEventListener("click", () => {
     exportChartData(TTData); // Replace SplitData with your filtered data if needed

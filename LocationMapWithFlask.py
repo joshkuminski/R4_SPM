@@ -340,7 +340,7 @@ def fetch_free_table(conn, customId):
     return df, MinGreen
 
 
-def create_folium_map(mio_locations, other_locations ,output_file="map.html"):
+def create_folium_map(mio_locations, other_locations, output_file="map.html"):
     """
     Create an interactive map using Folium.
     """
@@ -391,6 +391,8 @@ def create_folium_map(mio_locations, other_locations ,output_file="map.html"):
             # icon=folium.Icon(color="red", icon="info-sign", icon_size=(5, 5))
             icon=folium.Icon(color="red")
         ).add_to(m)
+
+
 
         # Add custom HTML content (e.g., a header above the map)
     custom_html = Element("""
@@ -679,17 +681,39 @@ def get_corridors():
 
         corridors = [{"corridorId": row[0], "corridorName": row[1], "latitude": row[2], "longitude": row[3],
         "intersectionId": row[4]} for row in cursor.fetchall()]
+
+        corridor_list = []
+        for corridor in corridors:
+            # Extract latitude and longitude for each point
+            coordinates = [corridor["latitude"], corridor["longitude"]]
+            corridor_list.append({
+                "corridorId": corridor["corridorId"],
+                "corridorName": corridor["corridorName"],
+                "coordinates": coordinates
+            })
+
+        print(corridor_list)
+
         # Extract unique corridorId and corridorName
         unique_corridors = {}
         for corridor in corridors:
             unique_corridors[corridor["corridorId"]] = corridor["corridorName"]
 
         # Convert to a list of dictionaries to send to the web app
+        print(unique_corridors)
         unique_corridors_list = [{"corridorId": key, "corridorName": value} for key, value in unique_corridors.items()]
 
         conn.close()
 
-        return json.dumps(unique_corridors_list, default=str)
+        response_data = {
+            "corridors": unique_corridors_list,
+            "corridor_list": corridor_list
+        }
+        response_json = json.dumps(response_data)
+
+        return Response(response_json, content_type='application/json')  # Set content type explicitly
+
+        #return json.dumps(unique_corridors_list, default=str)
 
     except Exception as e:
         print(f"Error: {e}")
@@ -1206,8 +1230,10 @@ def getSplitDataTT():
                     shiftEOG = pd.Timedelta(seconds=abs(EOG_seconds))
 
                     start = cycle["Timestamp"] - shiftEOG
-                    
-                    
+
+                    Green_start = start
+                    phase_count = 0
+
                     for ph_id, phase in enumerate(Seq_list[0]):
                         if cycle[f"SP{phase}_split"] is not None:
 
@@ -1244,23 +1270,34 @@ def getSplitDataTT():
                                     start = Red_end
                             
                                     Phase_Annotations.append({f"Phase_{phase}": Annotation})
-                            else:
+                            else:  # All Red Interval - needs to be before the green interval
                                 Split = int(cycle[f"SP{phase}_split"]) 
+                                
                                 if Split > 0:
-                                    end = start + pd.Timedelta(seconds=Split)
+                                    phase_count +=1 
+                                    #end = start + pd.Timedelta(seconds=Split)
+                                    if phase_count > 1:
+                                        end = start
+                                    else:
+                                        end = Green_start
+
+                                    start = end - pd.Timedelta(seconds=Split)
 
                                     Annotation = {"start": start,
                                                 "end": end,
                                                 "color": "AllRed"}
 
                                     Annotation = [Annotation]
-                                    start = end
+                                    #start = end
+                                    #end = start
                             
                                     Phase_Annotations.append({f"Phase_{phase}": Annotation}) 
 
                     Line_Annotations.append({"Line_1": Phase_Annotations})
                     Phase_Annotations = []
                     start = cycle["Timestamp"] - shiftEOG
+                    Green_start = start
+                    phase_count = 0
 
                     for ph_id, phase in enumerate(Seq_list[1]):
                         if cycle[f"SP{phase}_split"] is not None:
@@ -1302,14 +1339,21 @@ def getSplitDataTT():
                             else:
                                 Split = int(cycle[f"SP{phase}_split"]) 
                                 if Split > 0:
-                                    end = start + pd.Timedelta(seconds=Split)
+                                    phase_count +=1 
+                                    #end = start + pd.Timedelta(seconds=Split)
+                                    if phase_count > 1:
+                                        end = start
+                                    else:
+                                        end = Green_start
+
+                                    start = end - pd.Timedelta(seconds=Split)
 
                                     Annotation = {"start": start,
                                                 "end": end,
                                                 "color": "AllRed"}
 
                                     Annotation = [Annotation]
-                                    start = end
+                                    #start = end
                             
                                     Phase_Annotations.append({f"Phase_{phase}": Annotation})  
 

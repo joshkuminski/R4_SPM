@@ -1,6 +1,10 @@
 let selectedRange = 'last_month';
 let customStartDate = null;
 let customEndDate = null;
+let corridorLayers = {};
+let map;
+let corridors = []; // List of corridors
+let corridor_list = [];
 
 document.addEventListener("DOMContentLoaded", () => {
    const timeRangeDropdown = document.getElementById("range");
@@ -105,26 +109,220 @@ function TravelTimeReport() {{
 
 
  // Function to update the dropdown with corridors
- async function updateCorridorDropdown() {
+ async function orridorDropdown() {
+    fetch('/get_corridors')
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to fetch controller data');
+        }
+        return response.json(); // Parse JSON response
+    })
+    .then(data => {
+        //console.log("Controller Data:", data);
+        corridors = data.corridors;
+        corridor_list = data.corridor_list;
+        //const corridors = await response.json();
+        console.log(corridors);
+
+        const dropdown = document.getElementById("corridor-dropdown");
+        dropdown.innerHTML = ""; // Clear existing options
+
+        corridors.forEach(({ corridorId, corridorName }) => {
+            const option = document.createElement("option");
+            option.text = `${corridorId} (${corridorName} intersections)`;
+            option.value = corridorId;
+            dropdown.appendChild(option);
+        });
+
+        corridor_list.forEach(({ corridorId, corridorName, coordinates }) => {
+            // Add LayerGroup for the corridor
+            const layer = L.layerGroup([
+                L.polyline(coordinates, {
+                    color: "blue",
+                    weight: 5,
+                    opacity: 0.7,
+                }),
+            ]);
+
+            corridorLayers[corridorId] = layer;
+        });
+        
+    })
+    .catch(error => {
+        console.error('Error fetching controller data:', error);
+    });
+
+    // Add event listener to dropdown for selection change
+    dropdown.addEventListener("change", (event) => {
+        const selectedCorridorId = event.target.value;
+
+        // Clear existing layers
+        Object.values(corridorLayers).forEach((layer) => map.removeLayer(layer));
+
+        // Add the selected corridor's layer
+        if (selectedCorridorId && corridorLayers[selectedCorridorId]) {
+            map.addLayer(corridorLayers[selectedCorridorId]);
+
+            const bounds = L.latLngBounds(coordinates);
+            map.fitBounds(bounds);
+        }
+
+    });
+    
+}
+
+
+
+
+async function CorridorDropdown() {
     const response = await fetch('/get_corridors');
     if (!response.ok) {
         alert("Failed to fetch corridors.");
         return;
     }
 
-    const corridors = await response.json();
+    const corridors = await response.json(); // Expected format: [{ corridorId, corridorName, coordinates }]
+    console.log(corridors);
+
     const dropdown = document.getElementById("corridor-dropdown");
     dropdown.innerHTML = ""; // Clear existing options
 
-    corridors.forEach(({ corridorId, corridorName }) => {
+    corridors.forEach(({ corridorId, corridorName, coordinates }) => {
+        // Add option to dropdown
         const option = document.createElement("option");
-        option.text = `${corridorId} (${corridorName} intersections)`;
+        option.text = `Corridor ${corridorId} - ${corridorName}`;
         option.value = corridorId;
         dropdown.appendChild(option);
+
+        // Add LayerGroup for the corridor
+        const layer = L.layerGroup([
+            L.polyline(coordinates, {
+                color: "blue",
+                weight: 5,
+                opacity: 0.7,
+            }),
+        ]);
+
+        corridorLayers[corridorId] = layer;
+    });
+
+    // Add event listener to dropdown for selection change
+    dropdown.addEventListener("change", (event) => {
+        const selectedCorridorId = event.target.value;
+
+        // Clear existing layers
+        Object.values(corridorLayers).forEach((layer) => map.removeLayer(layer));
+
+        // Add the selected corridor's layer
+        if (selectedCorridorId && corridorLayers[selectedCorridorId]) {
+            map.addLayer(corridorLayers[selectedCorridorId]);
+
+            const bounds = L.latLngBounds(coordinates);
+            map.fitBounds(bounds);
+        }
+
     });
 }
 
 
-// Populate the dropdown on page load
-document.addEventListener("DOMContentLoaded", updateCorridorDropdown);
 
+// Function to update the dropdown with corridors
+async function updateCorridorDropdown() {
+    try {
+        const response = await fetch('/get_corridors');
+        if (!response.ok) {
+            throw new Error('Failed to fetch corridor data');
+        }
+
+        const data = await response.json();
+        corridors = data.corridors; // Metadata (id, name)
+        corridor_list = data.corridor_list; // Coordinates and metadata
+        //console.log(corridors, corridor_list);
+
+        const dropdown = document.getElementById("corridor-dropdown");
+        dropdown.innerHTML = ""; // Clear existing options
+
+        // Populate the dropdown
+        corridors.forEach(({ corridorId, corridorName }) => {
+            const option = document.createElement("option");
+            option.text = `${corridorId} (${corridorName} intersections)`;
+            option.value = corridorId;
+            dropdown.appendChild(option);
+        });
+
+
+        const corridorCoordinates = {};
+
+        // Accumulate coordinates for each corridor
+        corridor_list.forEach(({ corridorId, coordinates }) => {
+            // Initialize the array for this corridorId if it doesn't already exist
+            if (!corridorCoordinates[corridorId]) {
+                corridorCoordinates[corridorId] = [];
+            }
+
+            // Add the coordinates to the corresponding corridorId
+            corridorCoordinates[corridorId].push(coordinates);
+        });
+
+        // Create layers for each corridor after accumulating coordinates
+        Object.entries(corridorCoordinates).forEach(([corridorId, coordinates]) => {
+            // Create a single Leaflet polyline for the accumulated coordinates
+            const layer = L.polyline(coordinates, {
+                color: "rgba(26, 134, 148, 0.85)",
+                weight: 7,
+            });
+
+            // Add the polyline layer to the map
+            //map.addLayer(layer);
+
+            // Optionally, store the layer in the corridorLayers object
+            if (!corridorLayers[corridorId]) {
+                corridorLayers[corridorId] = [];
+            }
+            corridorLayers[corridorId].push(layer);
+        });
+        
+    
+        // Add event listener for corridor selection
+        dropdown.addEventListener("change", (event) => {
+            const selectedCorridorId = event.target.value;
+
+            Object.entries(corridorLayers).forEach(corridor => {
+                corridor.forEach(layer => {
+                  if (typeof layer[0] === 'string') {
+                    //console.log(layer[0]); 
+                  }else{
+                    map.removeLayer(layer[0])
+                  }
+                });
+              });
+
+            const selectedLayer = corridorLayers[selectedCorridorId];
+
+            map.addLayer(selectedLayer[0]);
+
+            // Fit the map to the bounds of the selected corridor
+            const bounds = selectedLayer[0].getBounds();
+            map.fitBounds(bounds);
+            //}
+        });
+    } catch (error) {
+        console.error('Error fetching corridor data:', error);
+    }
+}
+
+
+
+// Wait for the DOM to load
+document.addEventListener("DOMContentLoaded", () => {
+    // Initialize the Leaflet map
+    map = map_6a2d9ada9a86324658e365b0456fc888
+
+    // Add a tile layer (you can customize the tile layer URL)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    // Call the function to populate the dropdown
+    updateCorridorDropdown();
+});
