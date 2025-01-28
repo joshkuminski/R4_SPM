@@ -1,4 +1,4 @@
-from flask import Flask, render_template_string, request, render_template, send_file, Response
+from flask import Flask, render_template_string, request, render_template, send_file, Response, jsonify
 import json
 import folium
 from folium import CssLink, JavascriptLink
@@ -366,6 +366,7 @@ def create_folium_map(mio_locations, other_locations, output_file="map.html"):
             f"<a href=\"javascript:void(0)\" onclick=\"window.open(passTimeRangeToMarker('{details_url}'), '_blank')\">View TMC Data</a><br>"
             f"<br><a href='{split_url}' target='_blank'>View Split Monitor</a>"
         )
+        popup_html += f"<button onclick=\"openPanel({location['customId']}, '{location['name']}')\">Open Notepad</button>"
         folium.Marker(
             [location["latitude"], location["longitude"]],
             popup=popup_html,
@@ -383,6 +384,8 @@ def create_folium_map(mio_locations, other_locations, output_file="map.html"):
             </button><br>"""
             f"<br><a href='{split_url_nonMio}' target='_blank'>View Split Monitor</a>"
         )
+        popup_html_nonMio += f"<button onclick=\"openPanel({loc['name']}, '{loc['name']}')\">Open Notepad</button>"
+        
         # popup_html = f"<b>{loc['id']}</b><br>Main Route: {loc['main_route']}<br>Intersect Route: {loc['int_route']}"
         folium.Marker(
             [loc["latitude"], loc["longitude"]],
@@ -396,6 +399,13 @@ def create_folium_map(mio_locations, other_locations, output_file="map.html"):
 
         # Add custom HTML content (e.g., a header above the map)
     custom_html = Element("""
+        <div id="side-panel" style="display:none; position: absolute; top: 10%; right: 0; width: 800px; height: 80%; background: white; border-left: 2px solid black; padding: 10px; z-index: 1000; overflow-y: scroll;">
+            <h3 id="panel-title"></h3>
+            <div id="editor" style="height: 600px; background: #f9f9f9;"></div>
+            <button onclick="saveNote()">Save</button>
+            <button onclick="closePanel()">Close</button>
+        </div>
+
         <div id="time-range">
                 <label for="range">Select Time Range:</label>
                 <select id="range" onchange="setTimeRange(this.value)">
@@ -434,8 +444,13 @@ def create_folium_map(mio_locations, other_locations, output_file="map.html"):
 
     m.get_root().html.add_child(custom_html)
     m.get_root().header.add_child(CssLink('./static/folium_css.css'))
+
     m.add_css_link("flatpicker_css","https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css")
+    m.add_css_link("quill_css","https://cdn.quilljs.com/1.3.7/quill.snow.css")
+    
     m.add_js_link("flatpicker_js", "https://cdn.jsdelivr.net/npm/flatpickr")
+    m.add_js_link("quill_js", "https://cdn.quilljs.com/1.3.7/quill.min.js")
+
     m.get_root().html.add_child(JavascriptLink('./static/folium_js.js'))
 
     # Save the map to an HTML file
@@ -692,7 +707,6 @@ def get_corridors():
                 "coordinates": coordinates
             })
 
-        print(corridor_list)
 
         # Extract unique corridorId and corridorName
         unique_corridors = {}
@@ -700,7 +714,6 @@ def get_corridors():
             unique_corridors[corridor["corridorId"]] = corridor["corridorName"]
 
         # Convert to a list of dictionaries to send to the web app
-        print(unique_corridors)
         unique_corridors_list = [{"corridorId": key, "corridorName": value} for key, value in unique_corridors.items()]
 
         conn.close()
@@ -1461,6 +1474,48 @@ def getSplitDataTT_old():
 
     return Response(json.dumps(response_data, default=str), content_type='application/json')
 
+
+@app.route('/notes/<intersection_id>', methods=['GET'])
+def get_notes(intersection_id):
+    server = Mio_config['server']
+    database = Mio_config['database']
+
+    if len(intersection_id) > 10:
+        intersection_id = intersection_id.split(' ')[0]
+
+    intersection_id = f"{intersection_id.replace('-', '_')}" 
+
+
+    conn = connect_to_db(server, database)
+    cursor = conn.cursor()
+    cursor.execute("SELECT Content FROM IntersectionNotes WHERE IntersectionId = ?", intersection_id)
+    row = cursor.fetchone()
+
+    conn.close()
+    return jsonify({"content": row[0] if row else ""})
+
+
+@app.route('/notes', methods=['POST'])
+def save_note():
+    server = Mio_config['server']
+    database = Mio_config['database']
+
+    data = request.json
+    intersection_id = data.get('intersectionId')
+    intersection_id = f"{intersection_id.replace('-', '_')}" 
+    content = data.get('content')
+
+    conn = connect_to_db(server, database)
+    cursor = conn.cursor()
+    cursor.execute(
+        "IF EXISTS (SELECT 1 FROM IntersectionNotes WHERE IntersectionId = ?) "
+        "UPDATE IntersectionNotes SET Content = ? WHERE IntersectionId = ? "
+        "ELSE INSERT INTO IntersectionNotes (IntersectionId, Content) VALUES (?, ?)",
+        (intersection_id, content, intersection_id, intersection_id, content)
+    )
+    conn.commit()
+    conn.close()
+    return jsonify({"status": "success"})
 
 
 if __name__ == "__main__":

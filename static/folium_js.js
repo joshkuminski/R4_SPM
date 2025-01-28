@@ -316,7 +316,8 @@ async function updateCorridorDropdown() {
 // Wait for the DOM to load
 document.addEventListener("DOMContentLoaded", () => {
     // Initialize the Leaflet map
-    map = map_6a2d9ada9a86324658e365b0456fc888
+    //map = map_6a2d9ada9a86324658e365b0456fc888
+    map = map_ce9a1e3a2f3f145a77ebe170ecbf2fc8;
 
     // Add a tile layer (you can customize the tile layer URL)
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -326,3 +327,65 @@ document.addEventListener("DOMContentLoaded", () => {
     // Call the function to populate the dropdown
     updateCorridorDropdown();
 });
+
+
+//Quill.js - Notepad
+let currentIntersectionId = null;
+let quill = null;
+
+document.addEventListener("DOMContentLoaded", () => {
+    // Initialize Quill rich text editor
+    quill = new Quill('#editor', {
+        theme: 'snow',
+        modules: {
+            toolbar: [
+                ['bold', 'italic', 'underline'],
+                ['link', 'image', 'table'],
+                [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                [{ 'color': [] }, { 'background': [] }], 
+                [{ 'font': [] }]
+            ]
+        }
+    });
+});
+
+async function openPanel(intersectionId, name) {
+    if (name.length > 10){
+        currentIntersectionId = name.split(' ')[0];
+    }else{
+        currentIntersectionId = name;
+    }
+    
+    document.getElementById("side-panel").style.display = "block";
+    document.getElementById("panel-title").innerText = `Notes for ${name}`;
+    console.log(currentIntersectionId);
+
+    // Fetch notes from the backend
+    const response = await fetch(`/notes/${name}`);
+    if (response.ok) {
+        const { content } = await response.json();
+        quill.root.innerHTML = content; // Load content into the editor
+    } else {
+        quill.root.innerHTML = ''; // Clear editor if no notes exist
+    }
+}
+
+async function saveNote() {
+    const content = quill.root.innerHTML; // Get content from the editor
+    const response = await fetch('/notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ intersectionId: currentIntersectionId, content }),
+    });
+
+    if (response.ok) {
+        alert('Note saved successfully!');
+        closePanel();
+    } else {
+        alert('Failed to save note.');
+    }
+}
+
+function closePanel() {
+    document.getElementById("side-panel").style.display = "none";
+}
