@@ -114,7 +114,7 @@ if __name__ == "__main__":
     database = Mio_config['database']
     table_name = "Travel_Time_Table_01" # Format Travel_Time_Table_{Corridor Number as defined in map}
 
-    file = './Run Times/2025-01-22_131520_NY252EB-2.csv'
+    file = './Database_Folders/Travel Runs/2025-01-31_122716_252-EB-9.csv'
     df = import_TT(file)
 
     #print(df,f"Total Distance: {df['distance_ft'].sum()}")

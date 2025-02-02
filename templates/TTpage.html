@@ -43,10 +43,14 @@
             <label for="start-date">Start Date:</label>
             <input type="date" id="start-date">
         </div>
-        <label for="run-select">Select Phase:</label>
-    <select id="run-select">
-        <option value="1">Run 1</option>
-    </select>
+        <label for="run-select">Select Run:</label>
+        <select id="run-select">
+            <option value="1">Run 1</option>
+        </select>
+        <label for="run-select">Select Multiple Runs:</label>
+        <select id="run-select-multi" multiple>
+            <!-- Options dynamically populated -->
+        </select>
     </div>
  
          
@@ -91,6 +95,7 @@
         // Add event listener for phase selector
         document.getElementById("run-select").addEventListener("change", updateTravelTimeChart);
         document.getElementById("run-select").addEventListener("change", updateSpeedChart);
+        document.getElementById("run-select-multi").addEventListener("change", updateMultiTravelTimeChart);
 
         // Extract unique dates and times
         const timestamps = TTData.map(entry => new Date(entry.Timestamp));
@@ -119,6 +124,7 @@
 
                 // Populate the dropdown with filtered runIds
                 populateRunDropdown(uniqueRunIds);
+                populateMultiRunDropdown(uniqueRunIds);
                 updateControllerData(dateStr);
             }
         });
@@ -144,6 +150,24 @@
             });
         }
 
+        function populateMultiRunDropdown(runIds) {
+            const runDropdown = document.getElementById('run-select-multi');
+            runDropdown.innerHTML = ''; // Clear existing options
+
+            // Add a default option
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = 'Select a Run';
+            runDropdown.appendChild(defaultOption);
+
+            // Add options for each unique runId
+            runIds.forEach(runId => {
+                const option = document.createElement('option');
+                option.value = runId;
+                option.textContent = `Run ${runId}`;
+                runDropdown.appendChild(option);
+            });
+        }
 
 
          // Retrieve the Controller Split Data from Flask

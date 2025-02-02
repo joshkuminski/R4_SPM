@@ -158,7 +158,7 @@ def load_to_db(df, server, database, table_name):
 if __name__ == "__main__":
     server = Mio_config['server']
     database = Mio_config['database']
-    intersection_id = "Split_Table_04_43_494"
+    intersection_id = "Split_Table_04_43_222"
 
     '''
     # Create New Table
@@ -166,7 +166,7 @@ if __name__ == "__main__":
 
     create_table(conn)
     '''
-    file_path = "./SplitReports/SplitReport_34940_01_22_2025.csv"
+    file_path = "./Database_Folders/SplitReports/SplitReport_3222_01_31_2025.csv"
     df = import_csv(file_path)
 
     #print(df)

@@ -3,6 +3,7 @@ const ctx_2 = document.getElementById('timeSpeedChart').getContext('2d');
 
 let TTChart = null;
 let SpeedChart = null;
+let travelTimeChart = null;
 
 // Convert data for Chart.js
 const intersectionData = CorridorData.map(intersection => ({
@@ -273,6 +274,7 @@ function generateTrajectorySegments(trajectoryData) {
             borderColor: color,
             borderWidth: 3,
             showLine: true,
+            speed: speedMph,
             pointRadius: 0, // No points, just a line
             fill: false,
            
@@ -483,6 +485,7 @@ function updateTravelTimeChart(){
         '#33FF83'  // Mint Green
     ];
     const pointData = CorridorData.map((intersection, index ) => ({
+        typeLabel: "pointData",
         label: intersection.name,
         data: [{ x: firstTimestamp - 60000, y: intersection.distance }],
         backgroundColor: pointColors[index % pointColors.length],
@@ -499,7 +502,9 @@ function updateTravelTimeChart(){
     if (TTChart) {
         TTChart.destroy();
     }
-
+    if (travelTimeChart) {
+        travelTimeChart.destroy();
+    }
     // Initialize the chart
     TTChart = new Chart(ctx, {
         type: 'line',
@@ -540,6 +545,25 @@ function updateTravelTimeChart(){
                         },
                         mode: 'xy', // Allow zooming in both x and y axes
                     },
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const dataset = context.dataset; // Access the dataset object
+                            const dataPoint = context.raw;  // Get the current data point
+
+                             // If the dataset is a "pointData", show its label instead
+                            if (dataset.typeLabel === "pointData") {
+                                return `Intersection: ${dataset.label}`;
+                            } 
+                            
+                            // If it's trajectory data, display speed and distance
+                            else {
+                                const speed = dataset.speed ? dataset.speed.toFixed(2) : 0.0;
+                                return `Distance: ${dataPoint.y.toFixed(2)} ft\nSpeed: ${speed} mph`;
+                            }
+                        }
+                    }
                 },
             },
             
@@ -801,3 +825,80 @@ function updateSpeedChart(){
 
 // Initial chart rendering
 updateSpeedChart();
+
+
+
+
+function updateMultiTravelTimeChart() {
+    const selectedRuns = Array.from(document.getElementById("run-select-multi").selectedOptions).map(option => option.value);
+
+    if (selectedRuns.length === 0) {
+        console.warn("No runs selected.");
+        return;
+    }
+
+    // Filter the data for the selected runs
+    const filteredRuns = TTData.filter(point => selectedRuns.includes(point.runId.toString()));
+
+    if (filteredRuns.length === 0) {
+        console.warn("No data for selected runs.");
+        return;
+    }
+
+    // Normalize time
+    const runsById = {}; // Store runs separately
+    selectedRuns.forEach(runId => {
+        const runData = filteredRuns.filter(point => point.runId.toString() === runId);
+        if (runData.length > 0) {
+            const startTime = new Date(runData[0].Timestamp).getTime(); // Start of this run
+            runsById[runId] = runData.map(point => ({
+                x: (new Date(point.Timestamp).getTime() - startTime) / 1000, // Normalize to seconds from start
+                y: point.distance, // Keep distance unchanged
+            }));
+        }
+    });
+
+    // Generate datasets for Chart.js
+    const datasets = Object.keys(runsById).map((runId, index) => ({
+        label: `Run ${runId}`,
+        data: runsById[runId],
+        borderColor: getMultiColor(index), // Function to get distinct colors
+        borderWidth: 2,
+        pointRadius: 0, // Hide points for cleaner visualization
+        fill: false,
+    }));
+
+    //TODO - Add Lines indicting where the intersection is
+    IntersectionLines = createHorizontalLines(filteredRuns);
+
+    // Update the chart
+    if (travelTimeChart) {
+        travelTimeChart.destroy(); // Destroy previous instance if it exists
+    }
+    if (TTChart) {
+        TTChart.destroy(); // Destroy previous instance if it exists
+    }
+    travelTimeChart = new Chart(document.getElementById("timeSpaceChart").getContext("2d"), {
+        type: "line",
+        data: { datasets, ...IntersectionLines},
+        options: {
+            responsive: true,
+            scales: {
+                x: {
+                    type: "linear",
+                    position: "bottom",
+                    title: { display: true, text: "Normalized Time (seconds)" },
+                },
+                y: {
+                    title: { display: true, text: "Distance (ft)" },
+                },
+            },
+        },
+    });
+}
+
+// Utility function to get distinct colors
+function getMultiColor(index) {
+    const colors = ["red", "blue", "green", "orange", "purple", "brown", "cyan", "magenta"];
+    return colors[index % colors.length];
+}
