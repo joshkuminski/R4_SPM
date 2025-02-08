@@ -10,6 +10,16 @@
         <select class="btn btn-secondary dropdown-toggle" id="run-select">
             <option value="1">Run 1</option>
         </select>
+        <label for="speed-select">Select Speed:</label>
+        <select class="btn btn-secondary dropdown-toggle" id="speed-select">
+            <option value="20">20 mph</option>
+            <option value="25">25 mph</option>
+            <option value="30">30 mph</option>
+            <option value="35">35 mph</option>
+            <option value="40">40 mph</option>
+            <option value="45">45 mph</option>
+            <option value="50">50 mph</option>
+        </select>
         <label for="run-select">Select Multiple Runs:</label>
         <select class= "btn btn-secondary dropdown-toggle" id="run-select-multi" multiple>
             <!-- Options dynamically populated -->
@@ -59,6 +69,7 @@
     <script>
         // Add event listener for phase selector
         document.getElementById("run-select").addEventListener("change", updateTravelTimeChart);
+        document.getElementById("speed-select").addEventListener("change", updateTravelTimeChart);
         document.getElementById("run-select").addEventListener("change", updateSpeedChart);
         document.getElementById("run-select-multi").addEventListener("change", updateMultiTravelTimeChart);
         
@@ -122,7 +133,7 @@
             // Add a default option
             const defaultOption = document.createElement('option');
             defaultOption.value = '';
-            defaultOption.textContent = 'Select a Run';
+            defaultOption.textContent = '';
             runDropdown.appendChild(defaultOption);
 
             // Add options for each unique runId
@@ -141,7 +152,7 @@
             // Add a default option
             const defaultOption = document.createElement('option');
             defaultOption.value = '';
-            defaultOption.textContent = 'Select a Run';
+            defaultOption.textContent = '';
             runDropdown.appendChild(defaultOption);
 
             // Add options for each unique runId

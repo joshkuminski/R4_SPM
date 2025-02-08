@@ -285,53 +285,6 @@ function getFirstAndLastTimestamp(data) {
 }
 
 
-function calculateAverageSpeed(trajectoryData, CorridorData) {
-    // Ensure CorridorData is sorted by distance
-    CorridorData.sort((a, b) => a.distance - b.distance);
-
-    const averageSpeeds = [];
-
-    for (let i = 0; i < CorridorData.length - 1; i++) {
-        const currentIntersection = CorridorData[i];
-        const nextIntersection = CorridorData[i + 1];
-
-        // Filter trajectory data between the two intersections
-        const segmentData = trajectoryData.filter(point =>
-            point.y >= currentIntersection.distance && point.y <= nextIntersection.distance
-        );
-
-        if (segmentData.length < 2) {
-            // If not enough data points, skip this segment
-            averageSpeeds.push({
-                startIntersection: currentIntersection.intersectionId,
-                endIntersection: nextIntersection.intersectionId,
-                avgSpeed: null,
-            });
-            continue;
-        }
-
-        // Calculate total time and distance for the segment
-        const totalTime =
-            (new Date(segmentData[segmentData.length - 1].x) - new Date(segmentData[0].x)) / 1000; // Seconds
-        const totalDistance = nextIntersection.distance - currentIntersection.distance; // Feet
-
-        // Calculate average speed (ft/s)
-        const avgSpeed = totalDistance / totalTime;
-
-        // Convert speed to km/h if needed
-        const avgSpeedMph = avgSpeed * 0.6818;
-
-        averageSpeeds.push({
-            startIntersection: currentIntersection.intersectionId,
-            endIntersection: nextIntersection.intersectionId,
-            avgSpeed: avgSpeedMph.toFixed(2), // Round to 2 decimal places
-        });
-    }
-
-    return averageSpeeds;
-
-}
-
 
 function generateTrajectorySegments(trajectoryData) {
     const segments = [];
@@ -451,15 +404,16 @@ function calculateMetrics(corridorData, trajectoryData) {
 
     // Find the maximum average speed - Estimate based on the Max Avg Speed - 5mph
     const maxAvgSpeed = (Math.max(...metrics.map(metric => parseFloat(metric.avgSpeed)))) - 5;
+    const selectedSpeed = document.getElementById("speed-select").value - 5;
 
     // Calculate free flow travel time 
-    freeFlowTime = maxAvgSpeed > 0 ? totalDistance / (maxAvgSpeed / 0.6818) : null;
+    freeFlowTime = selectedSpeed > 0 ? totalDistance / (selectedSpeed / 0.6818) : null;
 
     // Add delay to each metric
     metrics.forEach(metric => {
         const distance = corridorData.find(intersection => intersection.intersectionId === metric.endIntersection).distance - 
                          corridorData.find(intersection => intersection.intersectionId === metric.startIntersection).distance;
-        metric.delay = maxAvgSpeed > 0 ? (metric.travelTime - ((distance / (maxAvgSpeed / 0.6818) ).toFixed(2))).toFixed(2) : "N/A";
+        metric.delay = selectedSpeed > 0 ? (metric.travelTime - ((distance / (selectedSpeed / 0.6818) ).toFixed(2))).toFixed(2) : "N/A";
     });
 
     return { metrics, totalTravelTime: totalTravelTime.toFixed(2),
@@ -552,6 +506,7 @@ function formatTimestamp(timestamp) {
 
 
 function findBandwidthUp(annotations, CorridorData) {
+    const selectedSpeed = document.getElementById("speed-select").value;
     const MPH_TO_FS = 0.6818; // Convert mph to ft/s
     const TIME_INTERVAL = 1000; // 1 second in ms
     let result = [];
@@ -583,7 +538,7 @@ function findBandwidthUp(annotations, CorridorData) {
         let toArray = startFromCurrent ? nextArray : currentArray;
 
         // Determine if we are moving forward or backward in the index
-        let speed = startFromCurrent ? 45 / MPH_TO_FS : -45 / MPH_TO_FS; // Adjust speed direction
+        let speed = startFromCurrent ? selectedSpeed / MPH_TO_FS : -selectedSpeed / MPH_TO_FS; // Adjust speed direction
 
         // Get distances based on array selection
         let fromY = CorridorData[annotations.indexOf(fromArray)].distance;
@@ -732,6 +687,8 @@ function findBandwidthUp(annotations, CorridorData) {
 
 
 function findBandwidthDown(annotations, CorridorData) {
+    const selectedSpeed = document.getElementById("speed-select").value;
+
     const MPH_TO_FS = 0.6818; // Convert mph to ft/s
     const TIME_INTERVAL = 1000; // 1 second in ms
     let result = [];
@@ -763,7 +720,7 @@ function findBandwidthDown(annotations, CorridorData) {
         let toArray = startFromCurrent ? prevArray : currentArray;
 
         // Determine if we are moving forward or backward in the index
-        let speed = startFromCurrent ? 45 / MPH_TO_FS : -45 / MPH_TO_FS; // Adjust speed direction
+        let speed = startFromCurrent ? selectedSpeed / MPH_TO_FS : -selectedSpeed / MPH_TO_FS; // Adjust speed direction
 
         // Get distances based on array selection
         let fromY = CorridorData[annotations.indexOf(fromArray)].distance;
@@ -971,9 +928,6 @@ function updateTravelTimeChart(){
     // Get filtered data for the selected date and run
     const trajectoryData = getRunData(selectedDate, parseInt(selectedRun));
 
-    const AveSpeed = calculateAverageSpeed(trajectoryData, CorridorData);
-    //console.log(AveSpeed);
-    //const trajectoryDataset = generateTrajectoryDataset(trajectoryData);
     // Generate datasets for each segment
     const trajectorySegments = generateTrajectorySegments(trajectoryData);
 
@@ -1336,24 +1290,6 @@ function updateSpeedChart(){
                         font: {size: 18},
                     },
                 },        
-                zoom: {
-                    pan: {
-                        enabled: true,
-                        mode: 'x', // Allow panning in the x-axis direction
-                    },
-                    zoom: {
-                        wheel: {
-                            enabled: true, // Enable zooming with the mouse wheel
-                        },
-                        pinch: {
-                            enabled: true, // Enable zooming with pinch gestures
-                        },
-                        drag: {
-                            enabled: false, // Enable zooming by dragging a rectangle
-                        },
-                        mode: 'xy', // Allow zooming in both x and y axes
-                    },
-                },
             },
             
             scales: {

@@ -1,8 +1,11 @@
 from flask import Flask, render_template_string, request, render_template, send_file, Response, jsonify, redirect, url_for, flash
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
-from wtforms.validators import DataRequired
+from wtforms.validators import DataRequired, Email, ValidationError
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from flask_mail import Mail, Message
+from itsdangerous import URLSafeTimedSerializer
+from werkzeug.security import generate_password_hash
 import json
 import folium
 from folium import CssLink, JavascriptLink
@@ -27,22 +30,80 @@ from UtilityFunctions import calculate_destination_point
 
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your_secret_key_here'  # Required for session management
+app.config['SECRET_KEY'] = Mio_config['secret_key']
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'  # Replace with your SMTP server
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = Mio_config['gmail']  # Replace with your email
+app.config['MAIL_PASSWORD'] = Mio_config['gmail_password'] # Replace with your email password
+
+mail = Mail(app)
+
+serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+
+def generate_confirmation_token(email):
+    return serializer.dumps(email, salt='email-confirmation-salt')
+
+def confirm_token(token, expiration=3600):  # Token expires in 1 hour
+    try:
+        email = serializer.loads(token, salt='email-confirmation-salt', max_age=expiration)
+        return email
+    except:
+        return False
+
+def connect_to_db(server, database, username=None, password=None):
+    """
+    Connect to the SQL Server database where TMC data is stored.
+
+    Returns:
+        pyodbc.Connection: A connection object.
+    """
+    conn_str = f"""
+        DRIVER={{ODBC Driver 17 for SQL Server}};
+        SERVER={server};
+        DATABASE={database};
+        Trusted_Connection=yes;
+        """
+
+    # Connection with Sql Auth
+    #conn_str = f"""
+    #   DRIVER={{ODBC Driver 17 for SQL Server}};
+    #    SERVER={server};
+    #    DATABASE={database};
+    #    UID={username};
+    #    PWD={password};
+    #    """
+    return pyodbc.connect(conn_str)
 
 # Initialize Flask-Login
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'  # Route to redirect unauthorized users
 
-# Dummy user data (replace with a database in production)
-users = {
-    'user1': {'password': 'password1'},
-    'user2': {'password': 'password2'}
-}
+server = Mio_config['server']
+database = Mio_config['database']
+
+try:
+    # Connect to the database
+    conn = connect_to_db(server, database)
+    cursor = conn.cursor()
+    query = f"""
+        SELECT *
+        FROM users
+        """
+    cursor.execute(query)
+    users = [{"username": row[1], "password": row[3]} for row in cursor.fetchall()]
+    # Convert the list to the desired dictionary format
+    users = {item['username']: {'password': item['password']} for item in users}
+    conn.close()
+
+except Exception as e:
+    print(f"Error: {e}")
 
 # User class for Flask-Login
 class User(UserMixin):
     def __init__(self, username):
         self.id = username
+        #self.email = email
 
 # Load user callback for Flask-Login
 @login_manager.user_loader
@@ -57,6 +118,12 @@ class LoginForm(FlaskForm):
     password = PasswordField('Password', validators=[DataRequired()])
     submit = SubmitField('Login')
 
+class SignUpForm(FlaskForm):
+    username = StringField('Username', validators=[DataRequired()])
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    password = PasswordField('Password', validators=[DataRequired()])
+    submit = SubmitField('Sign Up')
+
 # Routes
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -64,6 +131,23 @@ def login():
     if form.validate_on_submit():
         username = form.username.data
         password = form.password.data
+
+        try:
+            # Connect to the database
+            conn = connect_to_db(server, database)
+            cursor = conn.cursor()
+            query = f"""
+                SELECT *
+                FROM users
+                """
+            cursor.execute(query)
+            users = [{"username": row[1],"email": row[2], "password": row[3]} for row in cursor.fetchall()]
+            # Convert the list to the desired dictionary format
+            users = {item['username']: {'password': item['password']} for item in users}
+            conn.close()
+            print(users)
+        except Exception as e:
+            print(f"Error: {e}")
 
         # Check if user exists and password is correct
         if username in users and users[username]['password'] == password:
@@ -75,6 +159,96 @@ def login():
             flash('Invalid username or password', 'error')
 
     return render_template('login.html', form=form)
+
+
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    form = SignUpForm()
+    if form.validate_on_submit():
+        username = form.username.data
+        email = form.email.data
+        password = form.password.data
+
+        # Hash the password
+        #hashed_password = generate_password_hash(password)
+
+        # Check if the username or email already exists
+        conn = connect_to_db(server, database)
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM users WHERE username = ? OR email = ?', (username, email))
+        existing_user = cursor.fetchone()
+
+        if existing_user:
+            flash('Username or email already exists.', 'error')
+        else:
+            # Generate a confirmation token
+            token = generate_confirmation_token(email)
+
+            # Insert the new user into the unconfirmed_users table
+            cursor.execute(
+                'INSERT INTO unconfirmed_users (username, email, password, confirmation_token) VALUES (?, ?, ?, ?)',
+                (username, email, password, token)
+            )
+            conn.commit()
+            conn.close()
+
+            # Send confirmation email
+            send_confirmation_email(email, token)
+
+            flash('A confirmation email has been sent. Please check your inbox.', 'success')
+            return redirect(url_for('login'))
+
+    return render_template('signup.html', form=form)
+
+def send_confirmation_email(email, token):
+    msg = Message('Confirm Your Email', sender='openvisiontrafficcorp@gmail.com', recipients=[email])
+    confirm_url = url_for('confirm_email', token=token, _external=True)
+    msg.body = f'Please click the link to confirm your email: {confirm_url}'
+    mail.send(msg)
+
+
+
+@app.route('/confirm/<token>')
+def confirm_email(token):
+    email = confirm_token(token)
+    if not email:
+        flash('The confirmation link is invalid or has expired.', 'error')
+        return redirect(url_for('signup'))
+
+    # Move the user from unconfirmed_users to users
+    conn = connect_to_db(server, database)
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM unconfirmed_users WHERE email = ?', (email,))
+    user_data = cursor.fetchone()
+
+    if user_data:
+        cursor.execute(
+            'INSERT INTO users (username, email, password) VALUES (?, ?, ?)',
+            (user_data[1], user_data[2], user_data[3])
+        )
+        cursor.execute('DELETE FROM unconfirmed_users WHERE email = ?', (email,))
+        conn.commit()
+        conn.close()
+
+        flash('Email confirmed! You can now log in.', 'success')
+        return redirect(url_for('login'))
+    else:
+        flash('User not found.', 'error')
+        return redirect(url_for('signup'))
+
+
+
+@app.route('/resend_confirmation')
+def resend_confirmation():
+    email = request.args.get('email')
+    if email:
+        token = generate_confirmation_token(email)
+        send_confirmation_email(email, token)
+        flash('A new confirmation email has been sent.', 'success')
+    else:
+        flash('No email provided.', 'error')
+    return redirect(url_for('login'))
+
 
 @app.route('/logout')
 @login_required
@@ -144,31 +318,6 @@ def initialize_temp_db(tmc_data):
 
     db_conn.commit()
     #conn.close()
-
-
-def connect_to_db(server, database, username=None, password=None):
-    """
-    Connect to the SQL Server database where TMC data is stored.
-
-    Returns:
-        pyodbc.Connection: A connection object.
-    """
-    conn_str = f"""
-        DRIVER={{ODBC Driver 17 for SQL Server}};
-        SERVER={server};
-        DATABASE={database};
-        Trusted_Connection=yes;
-        """
-
-    # Connection with Sql Auth
-    #conn_str = f"""
-    #   DRIVER={{ODBC Driver 17 for SQL Server}};
-    #    SERVER={server};
-    #    DATABASE={database};
-    #    UID={username};
-    #    PWD={password};
-    #    """
-    return pyodbc.connect(conn_str)
 
 
 def fetch_locations_from_db():
