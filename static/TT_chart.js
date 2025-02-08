@@ -5,6 +5,86 @@ let TTChart = null;
 let SpeedChart = null;
 let travelTimeChart = null;
 
+
+// Custom plugin for Bandwidth annotations
+if (typeof Chart !== "undefined") {
+    Chart.register({
+        id: "parallelogram",
+        beforeDraw: function (chart) {
+            const ctx = chart.ctx;
+            if (!chart.options.plugins.annotation || !chart.options.plugins.annotation.parallelograms) return;
+
+            ctx.save();
+
+            chart.options.plugins.annotation.parallelograms.forEach(parallelogram => {
+                const { x1, y1, x2, y2, x3, y3, x4, y4, color, label, pos, edge, up } = parallelogram;
+
+                ctx.beginPath();
+                const x1Px = chart.scales.x.getPixelForValue(x1);
+                const y1Px = chart.scales.y.getPixelForValue(y1);
+                const x2Px = chart.scales.x.getPixelForValue(x2);
+                const y2Px = chart.scales.y.getPixelForValue(y2);
+                ctx.moveTo(x1Px, y1Px);
+                ctx.lineTo(x2Px , y2Px );
+                ctx.lineTo(chart.scales.x.getPixelForValue(x3), chart.scales.y.getPixelForValue(y3));
+                ctx.lineTo(chart.scales.x.getPixelForValue(x4), chart.scales.y.getPixelForValue(y4));
+                ctx.closePath();
+
+                ctx.fillStyle = color || "rgba(0, 255, 0, 0.3)";
+                ctx.fill();
+
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = color || "rgba(0, 255, 0, 0.3)";
+                ctx.stroke();
+
+                // **Add White Label at (x1, y1)**
+                ctx.fillStyle = "white";
+                ctx.font = "bold 14px Arial";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.lineWidth = 5;
+                ctx.strokeStyle = color; // Border color
+  
+                // Add a shadow for better visibility
+                ctx.shadowColor = "black";
+                ctx.shadowBlur = 4;
+                ctx.shadowOffsetX = 2;
+                ctx.shadowOffsetY = 2;
+                
+
+                if (pos && !edge && !up){
+                    ctx.strokeText(label, x1Px + 20, y1Px + 20);
+                    ctx.fillText(label || "Bandwidth", x1Px + 20, y1Px + 20);
+                }else if (!pos && !edge && !up){
+                    ctx.strokeText(label, x2Px + 20, y2Px + 20);
+                    ctx.fillText(label || "Bandwidth", x2Px + 20, y2Px + 20);
+                }else if (pos && !edge && up){
+                    ctx.strokeText(label, x2Px + 20, y2Px - 20);
+                    ctx.fillText(label || "Bandwidth", x2Px + 20, y2Px - 20);
+                }
+                else if (!pos && !edge && up){
+                    ctx.strokeText(label, x1Px + 20, y1Px - 20);
+                    ctx.fillText(label || "Bandwidth", x1Px + 20, y1Px - 20);
+                }
+                else{
+                    ctx.strokeText(label, x1Px + 20, y1Px + 20);
+                    ctx.fillText(label || "Bandwidth", x1Px + 20, y1Px + 20);
+                }
+                
+
+                // Reset shadow to prevent affecting other drawings
+                ctx.shadowColor = "transparent";
+            });
+
+            ctx.restore();
+        }
+    });
+} else {
+    console.error("Chart.js is not loaded. Make sure it's included before this script.");
+}
+
+
+
 // Convert data for Chart.js
 const intersectionData = CorridorData.map(intersection => ({
     x: null, // No specific timestamp for intersections
@@ -42,39 +122,53 @@ const yTicks = CorridorData.map(intersection => ({
 
 let firstTimestamp;
 let lastTimestamp;
-function createHorizontalLines(data) {
+function createHorizontalLines(data, X) {
     // Get the first and last timestamps for the selected runId
     if (data.length === 0) {
         console.warn("No data found for the selected runId.");
         return [];
     }
-    firstTimestamp = new Date(data[0].x);
-    lastTimestamp = new Date(data[data.length - 1].x);
+
+    const firstTimestamp = new Date(data[0].x); 
+    firstTimestamp.setSeconds(firstTimestamp.getSeconds() - 120); 
+    const lastTimestamp = new Date(data[data.length - 1].x);
+    lastTimestamp.setSeconds(firstTimestamp.getSeconds() + 120); 
+
+    // Calculate the total duration in seconds
+    const durationInSeconds = Math.floor((lastTimestamp - firstTimestamp) / 1000);
+
+    // Generate X additional timestamps spaced every second
+    const timestamps = [];
+    for (let i = 0; i <= durationInSeconds; i++) {
+        const timestamp = new Date(firstTimestamp.getTime() + i * 1000);
+        timestamps.push(timestamp);
+    }
 
     // Map horizontal lines for each intersection
     const horizontalLines = CorridorData.map(intersection => ({
-        //label: `Line at ${intersection.name}`,
-        label: '',
-        data: [
-            { x: firstTimestamp, y: intersection.distance}, // Start of line
-            { x: lastTimestamp, y: intersection.distance },  // End of line
-        ],
-        borderColor: 'red',
+        label: '', // No label
+        typeLabel: 'intLine',
+        data: timestamps.map(timestamp => ({
+            x: timestamp,
+            y: intersection.distance, // Keep the same y-value (distance) for all points
+        })),
+        borderColor: 'black',
         borderWidth: 1,
         showLine: true,
         pointRadius: 0, // No points, just a line
     }));
 
     return horizontalLines;
-
 }
+
 
 
 
 // Function to prepare annotations for Chart.js
 function prepareAnnotations(intersectionsData) {
-    const annotations = [];
-
+    const chartAnnotations = [];
+    const IntAnnotations1 = [];
+    const IntAnnotations2 = [];
     // Loop through each intersection
     Object.entries(intersectionsData).forEach(([intId, intersection]) => {
         const IntersectionDistance = CorridorData[intId].distance; // Assumes your annotations are grouped by intersectionId
@@ -97,16 +191,41 @@ function prepareAnnotations(intersectionsData) {
                                             Object.entries(interval).forEach(splitTime =>{
                                                 
                                                 Object.entries(splitTime[1]).forEach(timeT =>{
+                                                    // Ensure IntAnnotations[intId] is an array
+                                                    if (!IntAnnotations1[intId]) {
+                                                        IntAnnotations1[intId] = [];
+                                                    }
+                                                    if (!IntAnnotations2[intId]) {
+                                                        IntAnnotations2[intId] = [];
+                                                    }
+                                                    if (timeT[1].color == "Green" && lineName == "Line_1"){
+                                                        IntAnnotations1[intId].push({
+                                                            type: 'box',
+                                                            xMin: new Date(timeT[1].start).getTime(), // Start timestamp
+                                                            xMax: new Date(timeT[1].end).getTime(),   // End timestamp
+                                                            line: lineName,
+                                                            color: timeT[1].color,
+                                                        })
+                                                    }else if(timeT[1].color == "Green" && lineName == "Line_2"){
+                                                        IntAnnotations2[intId].push({
+                                                            type: 'box',
+                                                            xMin: new Date(timeT[1].start).getTime(), // Start timestamp
+                                                            xMax: new Date(timeT[1].end).getTime(),   // End timestamp
+                                                            line: lineName,
+                                                            color: timeT[1].color,
+                                                        })
 
-                                                    annotations.push({
+                                                    }
+                                                    
+                                                    chartAnnotations.push({
                                                         type: 'box',
                                                         xMin: new Date(timeT[1].start).getTime(), // Start timestamp
                                                         xMax: new Date(timeT[1].end).getTime(),   // End timestamp
                                                         yMin: lineName === 'Line_1' ?  IntersectionDistance : (IntersectionDistance - 150),      // Position for Line_1 or Line_2
                                                         yMax: lineName === 'Line_1' ?  (IntersectionDistance + 150) : IntersectionDistance,
-                                                        backgroundColor: getColor(timeT[1].color), // Map color names to colors
+                                                        backgroundColor: getColor(timeT[1].color, lineName), // Map color names to colors
                                                         borderWidth: 0,
-                                                        z: -1,
+                
                                                     });
                                                 });
                                             });
@@ -120,31 +239,16 @@ function prepareAnnotations(intersectionsData) {
             });
     });
 
-    return annotations;
+    return {chartAnnotations, IntAnnotations1, IntAnnotations2};
 }
 
-const diagonalStripePattern1 = pattern.draw('diagonal', 'rgba(42, 129, 81, 0.75)');
+const diagonalStripePattern1 = pattern.draw('diagonal', 'rgba(7, 66, 177, 0.75)');
 const diagonalStripePattern2 = pattern.draw('diagonal-right-left', 'rgba(42, 129, 81, 0.75)');
-/*
-const diagonalStripePattern1 = pattern.draw('diagonal', {
-    backgroundColor: 'rgba(0, 255, 0, 1)',
-    patternColor:'rgba(255, 0, 0, 1)',
-    spacing: 10,
-    lineWidth: 2
-}); 
-
-const diagonalStripePattern2 = pattern.draw('diagonal-right-left', {
-    backgroundColor: 'rgba(0, 255, 0, 1)',
-    patternColor:'rgba(255, 0, 0, 1)',
-    spacing: 10,
-    lineWidth: 2
-}); 
-*/
-
 // Function to map interval colors to chart colors
-function getColor(color) {
+function getColor(color, line) {
     const colorMap = {
-        Green: 'rgba(0, 255, 0, 0.65)',
+        Green: line === 'Line_1' ? 'rgba(0, 255, 0, 0.65)' : 'rgba(0, 89, 255, 0.65)',
+        //Green: 'rgba(0, 255, 0, 0.65)',
         Yel: 'rgba(255, 255, 0, 0.65)',
         Red: 'rgba(255, 0, 0, 0.65)',
         AllRed: 'rgba(100, 5, 45, 0.75)',
@@ -158,6 +262,14 @@ function getColor(color) {
 function filterAnnotations(annotations, runStartTime, runEndTime) {
     return annotations.filter(annotation => 
         annotation.xMin >= runStartTime && annotation.xMax <= runEndTime
+    );
+}
+
+function filterIntAnnotations(filterIntAnnotations, runStartTime, runEndTime) {
+    return filterIntAnnotations.map(list =>
+        list.filter(item => {
+            return item.xMin >= runStartTime && item.xMax <= runEndTime;
+        })
     );
 }
 
@@ -233,7 +345,7 @@ function generateTrajectorySegments(trajectoryData) {
           red: 'rgba(255, 99, 132, 1)',
           yellow: 'rgba(255, 206, 86, 1)',
           blue: 'rgba(54, 162, 235, 1)',
-          dblue: 'rgb(38, 106, 151)',
+          dblue: 'rgb(255, 255, 255)',
         }
       };
     // Define speed thresholds
@@ -427,7 +539,430 @@ function createSpeedGradient(ctx, chartArea, speeds) {
     return gradient;
 }
 
+
+// Function to convert Unix timestamp to readable format
+function formatTimestamp(timestamp) {
+    return new Date(timestamp).toLocaleString("en-US", {
+        hour12: false, // 24-hour format
+        timeZone: "UTC",
+    });
+}
+
+
+
+
+function findBandwidthUp(annotations, CorridorData) {
+    const MPH_TO_FS = 0.6818; // Convert mph to ft/s
+    const TIME_INTERVAL = 1000; // 1 second in ms
+    let result = [];
+
+    // Find the first non-empty array to start from
+    let startIndex = 0;
+    while (startIndex < annotations.length && annotations[startIndex].length === 0) {
+        startIndex++; // Skip empty arrays
+    }
+
+    // Iterate forward from the first non-empty array to the last
+    for (let i = startIndex; i < annotations.length - 1; i++) {
+        // Find the next non-empty following array
+        let nextIndex = i + 1;
+        while (nextIndex < annotations.length && annotations[nextIndex].length === 0) {
+            nextIndex++; // Skip empty arrays
+        }
+        if (nextIndex >= annotations.length) break; // If no next non-empty array, stop
+
+        let currentArray = annotations[i];
+        let nextArray = annotations[nextIndex];
+
+        // Get the distance between intersections
+        let distance = Math.abs(CorridorData[nextIndex].distance - CorridorData[i].distance);
+
+        // Determine which array has more annotations and start from that one
+        let startFromCurrent = currentArray.length >= nextArray.length;
+        let fromArray = startFromCurrent ? currentArray : nextArray;
+        let toArray = startFromCurrent ? nextArray : currentArray;
+
+        // Determine if we are moving forward or backward in the index
+        let speed = startFromCurrent ? 45 / MPH_TO_FS : -45 / MPH_TO_FS; // Adjust speed direction
+
+        // Get distances based on array selection
+        let fromY = CorridorData[annotations.indexOf(fromArray)].distance;
+        let toY = CorridorData[annotations.indexOf(toArray)].distance;
+
+        let EdgefoundMatch = false;
+
+        for (let j = 0; j < fromArray.length; j++) {
+            let currentBox = fromArray[j];
+            let currentXMin = currentBox.xMin;
+            let foundMatch = false;
+            let subfoundMatch = false;
+
+            while (!foundMatch) {
+                // Calculate expected xMin for the other array
+                let expectedX = currentXMin + (distance / speed) * TIME_INTERVAL;
+
+                for (let k = 0; k < toArray.length; k++) {
+                    let checkBox = toArray[k];
+
+                    // **Case 1: Expected X falls within xMin and xMax**
+                    if (expectedX >= checkBox.xMin && expectedX <= checkBox.xMax) {
+                        x1 = currentBox.xMin, y1 = fromY,
+                        x2 = expectedX, y2 = toY;
+
+                        subfoundMatch = true;
+                    } else {
+                        // **Case 2: No match, recalculate x1 using `to` xMin**
+                        x2 = checkBox.xMin;
+                        x1 = x2 - (distance / speed) * TIME_INTERVAL;
+
+                        if (x1 >= currentBox.xMin && x1 <= currentBox.xMax) {
+                            x1 = x1, y1 = fromY,
+                            x2 = x2, y2 = toY;
+
+                            subfoundMatch = true;
+                        } else {
+                            x1 = 0;
+                            x2 = 0;
+                            subfoundMatch = true;
+                        }
+                    }
+
+                    // **New Addition: After every found match, move to xMax of `from`**
+                    if (subfoundMatch) {
+                        let newFromXMin = currentBox.xMax;
+                        let newExpectedX = newFromXMin + (distance / speed) * TIME_INTERVAL;
+
+                        if (newExpectedX >= checkBox.xMin && newExpectedX <= checkBox.xMax) {
+                            const bandwidth = Math.abs((newFromXMin - x1)) / TIME_INTERVAL
+                            result.push({
+                                x1: x1, y1: y1,
+                                x2: x2, y2: y2,
+                                x4: newFromXMin, y4: fromY,
+                                x3: newExpectedX, y3: toY,
+                                color: "rgba(60, 255, 0, 0.3)", // Different color to distinguish the opposite direction
+                                label: `${bandwidth.toFixed(2)}s`,
+                                pos: startFromCurrent,
+                                edge: false,
+                                up: true
+                            });
+
+                            currentXMin = checkBox.xMax;
+                            foundMatch = true;
+                            break;
+                        } else {
+                            // **Case 2: No match, recalculate x4 using `to` xMax**
+                            let x3 = checkBox.xMax;
+                            let x4 = x3 - (distance / speed) * TIME_INTERVAL;
+
+                            if (x4 >= currentBox.xMin && x4 <= currentBox.xMax) {
+                                const bandwidth = Math.abs((x4 - x1)) / TIME_INTERVAL
+                                result.push({
+                                    x1: x1, y1: y1,
+                                    x2: x2, y2: y2,
+                                    x4: x4, y4: fromY,
+                                    x3: x3, y3: toY,
+                                    color: "rgba(60, 255, 0, 0.3)",
+                                    label: `${bandwidth.toFixed(2)}s`,
+                                    pos: startFromCurrent,
+                                    edge: false,
+                                    up: true
+                                });
+
+                                foundMatch = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // If no match is found, break out of the loop
+                if (!foundMatch) break;
+            }
+        }
+        // ** Check Edge Cases **
+        for (let z = 0; z < toArray.length; z++){
+            let checkEdgeBox = toArray[z];
+            let expectedEdgeX = checkEdgeBox.xMin - (distance / speed) * TIME_INTERVAL;
+
+            // Check if checkEdgeBox.xMin is NOT in result AND expectedEdgeX is valid
+            let alreadyExists = result.some(
+                (r) => r.x2 === checkEdgeBox.xMin
+            );
+
+            // Ensure expectedEdgeX is within some `fromArray` xMin to xMax
+            let validEdgeFrom = fromArray.some(box => expectedEdgeX >= box.xMin && expectedEdgeX <= box.xMax);
+            let validEdgeIndex = fromArray.findIndex(box => expectedEdgeX >= box.xMin && expectedEdgeX <= box.xMax);
+
+            if (!alreadyExists && validEdgeFrom && validEdgeIndex !== -1) {
+                x2 = expectedEdgeX,
+                y2 = fromY,
+                x1 = checkEdgeBox.xMin,
+                y1 = toY,
+               
+                EdgefoundMatch = true;       
+            }          
+            
+            if (EdgefoundMatch){
+                let edgeFromXMax = fromArray[validEdgeIndex].xMax;
+                let edgeExpectedX = edgeFromXMax + (distance / speed) * TIME_INTERVAL;              
+                    if (edgeExpectedX >= checkEdgeBox.xMin && edgeExpectedX <= checkEdgeBox.xMax) {
+                        const bandwidth = Math.abs((edgeExpectedX - x1)) / TIME_INTERVAL
+                        result.push({
+                            x1: x1, y1: y1,
+                            x2: x2, y2: y2,
+                            x3: edgeFromXMax, y3: fromY,
+                            x4: edgeExpectedX, y4: toY,
+                            color: "rgba(60, 255, 0, 0.3)",
+                            label: `${bandwidth.toFixed(2)}s`,
+                            pos: startFromCurrent,
+                            edge: true,
+                            up: true
+                        });
+                    
+                    }
+                   EdgefoundMatch = false;
+            }
+        }
+    }
+
+    return result;
+}
+
+
+
+
+function findBandwidthDown(annotations, CorridorData) {
+    const MPH_TO_FS = 0.6818; // Convert mph to ft/s
+    const TIME_INTERVAL = 1000; // 1 second in ms
+    let result = [];
+
+    // Find the first non-empty array to start from
+    let startIndex = annotations.length - 1;
+    while (startIndex >= 0 && annotations[startIndex].length === 0) {
+        startIndex--; // Skip empty arrays
+    }
+
+    // Iterate from the last non-empty array down to index 0
+    for (let i = startIndex; i > 0; i--) {
+        // Find the next non-empty previous array
+        let prevIndex = i - 1;
+        while (prevIndex >= 0 && annotations[prevIndex].length === 0) {
+            prevIndex--; // Skip empty arrays
+        }
+        if (prevIndex < 0) break; // If no previous non-empty array, stop
+
+        let currentArray = annotations[i];
+        let prevArray = annotations[prevIndex];
+
+        // Get the distance between intersections
+        let distance = Math.abs(CorridorData[prevIndex].distance - CorridorData[i].distance);
+
+        // Determine which array has more annotations and start from that one
+        let startFromCurrent = currentArray.length >= prevArray.length;
+        let fromArray = startFromCurrent ? currentArray : prevArray;
+        let toArray = startFromCurrent ? prevArray : currentArray;
+
+        // Determine if we are moving forward or backward in the index
+        let speed = startFromCurrent ? 45 / MPH_TO_FS : -45 / MPH_TO_FS; // Adjust speed direction
+
+        // Get distances based on array selection
+        let fromY = CorridorData[annotations.indexOf(fromArray)].distance;
+        let toY = CorridorData[annotations.indexOf(toArray)].distance;
+
+        let EdgefoundMatch = false;
+
+        for (let j = 0; j < fromArray.length; j++) {
+            let currentBox = fromArray[j];
+            let currentXMin = currentBox.xMin;
+            let foundMatch = false;
+            let subfoundMatch = false;
+
+            while (!foundMatch) {
+                // Calculate expected xMin for the other array
+                let expectedX = currentXMin + (distance / speed) * TIME_INTERVAL;
+
+                for (let k = 0; k < toArray.length; k++) {
+                    let checkBox = toArray[k];
+
+                    // **Case 1: Expected X falls within xMin and xMax**
+                    if (expectedX >= checkBox.xMin && expectedX <= checkBox.xMax) {
+                        
+                        x1 = currentBox.xMin, y1 = fromY,
+                        x2 = expectedX, y2 = toY
+                        
+
+                        // Move to the xMax of the `from` box to continue the search
+                        //currentXMin = currentBox.xMax;
+                        subfoundMatch = true;
+                        //break;
+                    } else {
+                        // **Case 2: No match, recalculate x1 using `to` xMin**
+                        x2 = checkBox.xMin;
+                        x1 = x2 - (distance / speed) * TIME_INTERVAL;
+
+                        if (x1 >= currentBox.xMin && x1 <= currentBox.xMax) {
+                            
+                            x1 = x1, y1 = fromY,
+                            x2 = x2, y2 = toY
+
+                            subfoundMatch = true;
+
+                        }else{
+                            x1 = 0;
+                            x2 = 0;
+                            subfoundMatch = true;
+                        }
+                    }
+                
+
+                // **After every found match, move to xMax of `from`**
+                    if (subfoundMatch) {
+                        let newFromXMin = currentBox.xMax;
+                        let newExpectedX = newFromXMin + (distance / speed) * TIME_INTERVAL;
+
+                        //for (let k = 0; k < toArray.length; k++) {
+                            //let checkBox = toArray[k];
+
+                            if (newExpectedX >= checkBox.xMin && newExpectedX <= checkBox.xMax) {
+                                const bandwidth = Math.abs((newFromXMin - x1)) / TIME_INTERVAL
+                                result.push({
+                                    x1: x1, y1: y1,
+                                    x2: x2, y2: y2,
+                                    x4: newFromXMin, y4: fromY,
+                                    x3: newExpectedX, y3: toY,
+                                    color: "rgba(0, 0, 255, 0.3)",
+                                    label: `${bandwidth.toFixed(2)}s`,
+                                    pos: startFromCurrent,
+                                    edge: false,
+                                    up: false
+                                });
+
+                                currentXMin = checkBox.xMax;
+                                foundMatch = true;
+                                break;
+                            }else {
+                                // **Case 2: No match, recalculate x4 using `to` xMax**
+                                let x3 = checkBox.xMax;
+                                let x4 = x3 - (distance / speed) * TIME_INTERVAL;
+        
+                                if (x4 >= currentBox.xMin && x4 <= currentBox.xMax) {
+                                    const bandwidth = Math.abs((x4 - x1)) / TIME_INTERVAL
+                                    result.push({
+                                        x1: x1, y1: y1,
+                                        x2: x2, y2: y2,
+                                        x4: x4, y4: fromY,
+                                        x3: x3, y3: toY,
+                                        color: "rgba(0, 0, 255, 0.3)",
+                                        label: `${bandwidth.toFixed(2)}s`,
+                                        pos: startFromCurrent,
+                                        edge: false,
+                                        up: false
+                                    });
+
+                                    foundMatch = true;
+                                    break;
+                                }
+                            }
+                        //}
+                    }
+                }
+
+                // If no match is found, break out of the loop
+                if (!foundMatch) break;
+            }
+        }
+
+        // ** Check Edge Cases **
+        for (let z = 0; z < toArray.length; z++){
+            let checkEdgeBox = toArray[z];
+            let expectedEdgeX = checkEdgeBox.xMin - (distance / speed) * TIME_INTERVAL;
+
+            // Check if checkEdgeBox.xMin is NOT in result AND expectedEdgeX is valid
+            let alreadyExists = result.some(
+                (r) => r.x2 === checkEdgeBox.xMin
+            );
+
+            // Ensure expectedEdgeX is within some `fromArray` xMin to xMax
+            let validEdgeFrom = fromArray.some(box => expectedEdgeX >= box.xMin && expectedEdgeX <= box.xMax);
+            let validEdgeIndex = fromArray.findIndex(box => expectedEdgeX >= box.xMin && expectedEdgeX <= box.xMax);
+
+            if (!alreadyExists && validEdgeFrom && validEdgeIndex !== -1) {
+                x2 = expectedEdgeX,
+                y2 = fromY,
+                x1 = checkEdgeBox.xMin,
+                y1 = toY,
+               
+                EdgefoundMatch = true;       
+            }          
+            
+            if (EdgefoundMatch){
+                let edgeFromXMax = fromArray[validEdgeIndex].xMax;
+                let edgeExpectedX = edgeFromXMax + (distance / speed) * TIME_INTERVAL;              
+                    if (edgeExpectedX >= checkEdgeBox.xMin && edgeExpectedX <= checkEdgeBox.xMax) {
+                        const bandwidth = Math.abs((edgeExpectedX - x1)) / TIME_INTERVAL
+                        result.push({
+                            x1: x1, y1: y1,
+                            x2: x2, y2: y2,
+                            x3: edgeFromXMax, y3: fromY,
+                            x4: edgeExpectedX, y4: toY,
+                            color: "rgba(0, 0, 255, 0.3)",
+                            label: `${bandwidth.toFixed(2)}s`,
+                            pos: startFromCurrent,
+                            edge: true,
+                            up: false
+                        });
+                    
+                    }
+                   EdgefoundMatch = false;
+            }
+        }
+
+    }
+
+    return result;
+}
+
+
+function mergeCloseAnnotations(annotations) {
+    const FIVE_SECONDS = 8000; // 8 seconds in milliseconds
+    let mergedAnnotations = [];
+
+    annotations.forEach(group => {
+        if (group.length === 0) {
+            mergedAnnotations.push([]);
+            return;
+        }
+
+        let mergedGroup = [];
+        let currentBox = { ...group[0] }; // Start with the first box
+
+        for (let i = 1; i < group.length; i++) {
+            let nextBox = group[i];
+
+            // Check if the next annotation is within 5 seconds
+            if (nextBox.xMin - currentBox.xMax <= FIVE_SECONDS) {
+                // Merge by extending xMax
+                currentBox.xMax = Math.max(currentBox.xMax, nextBox.xMax);
+            } else {
+                // Push the finalized annotation and move to the next one
+                mergedGroup.push(currentBox);
+                currentBox = { ...nextBox };
+            }
+        }
+
+        // Push the last annotation in the group
+        mergedGroup.push(currentBox);
+        mergedAnnotations.push(mergedGroup);
+    });
+
+    return mergedAnnotations;
+}
+
+
+
 let IntersectionLines = [];
+let showBandwidthDown = true;
+let showBandwidthUp = true;
 
 function updateTravelTimeChart(){
     const selectedDate = document.getElementById('start-date').value; // Format: 'YYYY-MM-DD'
@@ -452,16 +987,27 @@ function updateTravelTimeChart(){
     renderTable();
 
     // Prepare annotations for Chart.js
-    const chartAnnotations = prepareAnnotations(Split_Annotations);
-
+    const { chartAnnotations, IntAnnotations1, IntAnnotations2 } = prepareAnnotations(Split_Annotations);
 
     // Get first and last timestamps
     const { firstTimestamp, lastTimestamp } = getFirstAndLastTimestamp(trajectoryData);
+    // filter the annotations for the selected run
+    const filteredChartAnnotations = filterAnnotations(chartAnnotations, firstTimestamp - 120000, lastTimestamp + 120000);
+    const filterIntAnnotations1 = filterIntAnnotations(IntAnnotations1, firstTimestamp - 120000, lastTimestamp + 120000);
+    const filterIntAnnotations2 = filterIntAnnotations(IntAnnotations2, firstTimestamp - 120000, lastTimestamp + 120000);
+    
+    // Merge green times where non-coord phase skip
+    let mergedAnnotations1 = mergeCloseAnnotations(filterIntAnnotations1);
+    let mergedAnnotations2 = mergeCloseAnnotations(filterIntAnnotations2);
 
-    const filteredChartAnnotations = filterAnnotations(chartAnnotations, firstTimestamp - 60000, lastTimestamp + 60000);
+    // Find the X Values for the Parallelograms
+    const parallelograms1 = findBandwidthUp(mergedAnnotations1, CorridorData);
+    const parallelograms2 = findBandwidthDown(mergedAnnotations2, CorridorData);
 
+    // Create lines for each intersection
     IntersectionLines = createHorizontalLines(trajectoryData);
 
+    //Create points for the intersections
     pointColors = [
         '#DF00FF', // Vibrant Orange-Red
         '#0D9494', // Vibrant Green
@@ -487,16 +1033,19 @@ function updateTravelTimeChart(){
     const pointData = CorridorData.map((intersection, index ) => ({
         typeLabel: "pointData",
         label: intersection.name,
-        data: [{ x: firstTimestamp - 60000, y: intersection.distance }],
+        data: [{ x: firstTimestamp - 120000, y: intersection.distance }],
         backgroundColor: pointColors[index % pointColors.length],
         borderColor: pointColors[index % pointColors.length],
         pointRadius: 6,
         pointHoverRadius: 8,
     }));
 
+    let toggleableBandwidthUp =  parallelograms1;
+    let toggleableBandwidthDown =  parallelograms2;
 
     const annotations = [...filteredChartAnnotations];
     const data = [...trajectorySegments, ...IntersectionLines, ...pointData];
+
 
     // Destroy the previous chart instance if it exists
     if (TTChart) {
@@ -513,9 +1062,16 @@ function updateTravelTimeChart(){
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false, 
             plugins: {
                 annotation: {
                     annotations: annotations,
+                    //parallelograms: parallelograms,
+                    parallelograms: [
+                        ...(showBandwidthDown ? toggleableBandwidthDown : []), 
+                        ...(showBandwidthUp ? toggleableBandwidthUp : [])
+                    ],
+                    display: 'beforeDatasetsDraw'
                 },
                 pattern, //pattern plugin
                 legend: {
@@ -527,7 +1083,8 @@ function updateTravelTimeChart(){
                         color:'#4BCCB7',
                         font: {size: 18},
                     },
-                },        
+                },  
+                /*      
                 zoom: {
                     pan: {
                         enabled: true,
@@ -546,6 +1103,7 @@ function updateTravelTimeChart(){
                         mode: 'xy', // Allow zooming in both x and y axes
                     },
                 },
+                */
                 tooltip: {
                     callbacks: {
                         label: function(context) {
@@ -556,8 +1114,9 @@ function updateTravelTimeChart(){
                             if (dataset.typeLabel === "pointData") {
                                 return `Intersection: ${dataset.label}`;
                             } 
-                            
-                            // If it's trajectory data, display speed and distance
+                            else if (dataset.typeLabel === "intLine"){
+                                return `Distance: ${dataPoint.y.toFixed(2)} ft`;
+                            }                            
                             else {
                                 const speed = dataset.speed ? dataset.speed.toFixed(2) : 0.0;
                                 return `Distance: ${dataPoint.y.toFixed(2)} ft\nSpeed: ${speed} mph`;
@@ -601,6 +1160,8 @@ function updateTravelTimeChart(){
 
 // Initial chart rendering
 updateTravelTimeChart();
+
+
 
 
 function getSpeedData(selectedDate, selectedRunId) {
@@ -828,6 +1389,38 @@ updateSpeedChart();
 
 
 
+function createIntersectionLines(data) {
+    const allXValues = data.flatMap(dataset => dataset.data.map(point => point.x));
+
+    const xValues = data[0].data.map(point => point.x);
+    const minX = Math.min(...allXValues);
+    const maxX = Math.max(...allXValues);
+
+    // Get the first and last timestamps for the selected runId
+    if (data.length === 0) {
+        console.warn("No data found for the selected runId.");
+        return [];
+    }
+    firstTimestamp = new Date(data[0].x);
+    lastTimestamp = new Date(data[data.length - 1].x);
+
+    // Map horizontal lines for each intersection
+    const horizontalLines = CorridorData.map(intersection => ({
+        //label: `Line at ${intersection.name}`,
+        label: '',
+        data: [
+            { x: minX, y: intersection.distance}, // Start of line
+            { x: maxX, y: intersection.distance },  // End of line
+        ],
+        borderColor: 'black',
+        borderWidth: 1,
+        showLine: true,
+        pointRadius: 0, // No points, just a line
+    }));
+
+    return horizontalLines;
+
+}
 
 function updateMultiTravelTimeChart() {
     const selectedRuns = Array.from(document.getElementById("run-select-multi").selectedOptions).map(option => option.value);
@@ -869,7 +1462,7 @@ function updateMultiTravelTimeChart() {
     }));
 
     //TODO - Add Lines indicting where the intersection is
-    IntersectionLines = createHorizontalLines(filteredRuns);
+    IntersectionLines = createIntersectionLines(datasets);
 
     // Update the chart
     if (travelTimeChart) {
@@ -878,11 +1471,38 @@ function updateMultiTravelTimeChart() {
     if (TTChart) {
         TTChart.destroy(); // Destroy previous instance if it exists
     }
+
+    const data = [...datasets, ...IntersectionLines];
+
     travelTimeChart = new Chart(document.getElementById("timeSpaceChart").getContext("2d"), {
         type: "line",
-        data: { datasets, ...IntersectionLines},
+        data: {
+            datasets: data,
+        },
         options: {
             responsive: true,
+            plugins:{
+                legend: {
+                    labels: {
+                        filter: (legendItem) => {
+                            // Exclude datasets with empty labels
+                            return legendItem.text && legendItem.text.trim() !== '';
+                        },
+                        color:'#4BCCB7',
+                        font: {size: 18},
+                    },
+                }, 
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const dataPoint = context.raw;  // Get the current data point
+                            
+                            return `Distance: ${dataPoint.y.toFixed(2)} ft, Travel Time: ${dataPoint.x.toFixed(2)} sec`;
+                        
+                        }
+                    }
+                },
+            },
             scales: {
                 x: {
                     type: "linear",

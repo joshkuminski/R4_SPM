@@ -317,7 +317,7 @@ async function updateCorridorDropdown() {
 document.addEventListener("DOMContentLoaded", () => {
     // Initialize the Leaflet map
     //map = map_6a2d9ada9a86324658e365b0456fc888
-    map = map_ce9a1e3a2f3f145a77ebe170ecbf2fc8;
+    map = map_de9b33b1d39fc7c15790959ab383a89a;
 
     // Add a tile layer (you can customize the tile layer URL)
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {

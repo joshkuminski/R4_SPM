@@ -1,4 +1,8 @@
-from flask import Flask, render_template_string, request, render_template, send_file, Response, jsonify
+from flask import Flask, render_template_string, request, render_template, send_file, Response, jsonify, redirect, url_for, flash
+from flask_wtf import FlaskForm
+from wtforms import StringField, PasswordField, SubmitField
+from wtforms.validators import DataRequired
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 import json
 import folium
 from folium import CssLink, JavascriptLink
@@ -23,6 +27,62 @@ from UtilityFunctions import calculate_destination_point
 
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'your_secret_key_here'  # Required for session management
+
+# Initialize Flask-Login
+login_manager = LoginManager(app)
+login_manager.login_view = 'login'  # Route to redirect unauthorized users
+
+# Dummy user data (replace with a database in production)
+users = {
+    'user1': {'password': 'password1'},
+    'user2': {'password': 'password2'}
+}
+
+# User class for Flask-Login
+class User(UserMixin):
+    def __init__(self, username):
+        self.id = username
+
+# Load user callback for Flask-Login
+@login_manager.user_loader
+def load_user(username):
+    if username in users:
+        return User(username)
+    return None
+
+# Login form
+class LoginForm(FlaskForm):
+    username = StringField('Username', validators=[DataRequired()])
+    password = PasswordField('Password', validators=[DataRequired()])
+    submit = SubmitField('Login')
+
+# Routes
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        username = form.username.data
+        password = form.password.data
+
+        # Check if user exists and password is correct
+        if username in users and users[username]['password'] == password:
+            user = User(username)
+            login_user(user)
+            flash('Login successful!', 'success')
+            return redirect(url_for('map_page'))
+        else:
+            flash('Invalid username or password', 'error')
+
+    return render_template('login.html', form=form)
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash('You have been logged out.', 'info')
+    return redirect(url_for('login'))
+
 
 # Global variable to store the database connection
 db_conn = sqlite3.connect(":memory:", check_same_thread=False)
@@ -351,7 +411,8 @@ def create_folium_map(mio_locations, other_locations, output_file="map.html"):
         default_location = [43.6532, -79.3832]  # Default: Rochester
 
     # Create a folium map
-    m = folium.Map(location=default_location, zoom_start=12)
+    map_id = str(uuid.uuid4()) 
+    m = folium.Map(location=default_location, zoom_start=12, id=map_id)
 
     # Add markers for each location
     for location in mio_locations:
@@ -660,6 +721,7 @@ def fetch_SequenceKey_table(conn):
 
 
 @app.route("/")
+@login_required
 def index():
     """
     Home page showing the interactive map.
@@ -671,6 +733,7 @@ def index():
 
 
 @app.route("/map")
+@login_required
 def map_page():
     """
     Serve the generated map HTML.
@@ -735,6 +798,7 @@ def get_corridors():
 
 
 @app.route("/intersection/<name>/<intersection_id>")
+@login_required
 def intersection_details(intersection_id, name):
     """
     Display TMC data for a specific intersection.
@@ -933,6 +997,7 @@ def export_filtered_data():
 
 
 @app.route("/split_monitor/<name>/<customId>")
+@login_required
 def split_monitor(name, customId):
 
     # Grab the Data from the MSSMS database
@@ -1061,6 +1126,7 @@ def add_corridor():
 
 
 @app.route("/travel_time_report")
+@login_required
 def travel_time_report():
     server = Mio_config['server']
     database = Mio_config['database']
